@@ -101,6 +101,8 @@ public class FMIndex {
 
     public int[] getRange (char[] P, char[] bwt) {
 
+        if (P.length==0) return new int[]{};
+
         for (char l : P) {
             if(!C.containsKey(l)) return new int[]{};
         }
