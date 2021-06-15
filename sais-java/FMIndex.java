@@ -15,14 +15,19 @@ public class FMIndex {
 
         this.C = computeC(bwt, occArray);
 
-        for (int i=64; i<bwt.length; i+=64) {
+        for (int i=0; i<bwt.length; i+=64) {
             HashMap<Character, Integer> hashMap = new HashMap<>();
             for (char c : C.keySet()) {
 
                 int k = i;
-                while (bwt[k]!=c) k--;
-                hashMap.put(c, occArray[k]);
+                while ( k>0 && bwt[k]!=c) k--;
 
+                if(k==0){
+                    if(bwt[0]==c) hashMap.put(c, occArray[k]);
+                    else hashMap.put(c, 0);
+                } else {
+                    hashMap.put(c, occArray[k]);
+                }
             }
             rankInitial.add(hashMap);
         }
@@ -32,7 +37,7 @@ public class FMIndex {
 
     }
 
-    public HashMap<Character, Integer> computeC (char[] bwt, int[] occ) {
+    public static HashMap<Character, Integer> computeC (char[] bwt, int[] occ) {
 
         HashMap<Character, Integer> preC = new HashMap<>();
 
@@ -75,21 +80,23 @@ public class FMIndex {
 
     public int rank(char c, char[] bwt, int q){
 
-        q = q-1;
+        q--;
 
-        if ( (q != 0) &&  (q % 64 == 0) ) {
-            return rankInitial.get((q/64)-1).get(c);
+        int index = q/64;
+
+        if (q % 64 == 0) {
+            return rankInitial.get(index).get(c);
         } else {
-            int preValue = 0;
+
+            int preValue = rankInitial.get(index).get(c);
             int toAdd = 0;
-            if (q>64) {
-                preValue = rankInitial.get((q/64)-1).get(c);
-            }
-            for (int i=q; i>=(q-(q%64)); i--) {
+
+            for (int i = (64*index)+1; i<=q; i++) {
                 if(bwt[i]==c) toAdd++;
             }
             return preValue+toAdd;
         }
+
     }
 
     public int[] getRange (char[] P, char[] bwt) {
@@ -105,16 +112,24 @@ public class FMIndex {
         int first = C.get(c)+1;
         int last = C.get(nc);
 
+
         if(c==nc) {
             last = bwt.length;
         }
+
+        //System.out.println(Arrays.toString(new int[]{first, last}));
 
         while (first<=last && i>0) {
             c = P[i-1];
             first = C.get(c) + rank(c, bwt, first-1) + 1;
             last = C.get(c) + rank(c, bwt, last);
+
+            //System.out.println(Arrays.toString(new int[]{first, last}));
+
             i--;
         }
+
+        System.out.println(Arrays.toString(new int[]{first, last}));
 
         if (last<first) {
             return new int[]{};

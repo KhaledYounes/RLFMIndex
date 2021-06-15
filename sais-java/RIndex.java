@@ -3,10 +3,11 @@ import java.util.stream.Collectors;
 
 public class RIndex {
 
-    private Character[] characters;
-    private HashMap<Character, Integer> bwtC;
+    private final Character[] characters;
+    private final HashMap<Character, Integer> bwtC;
     private final ArrayList<Integer> preData = new ArrayList<>();
-    private HashMap<Character, Integer> C;
+    private final HashMap<Character, Integer> C;
+    private final ArrayList<HashMap<Character, Integer>> rankInitial = new ArrayList<>();
     private final char[] sPrime;
     private final Integer[] R;
     private final Integer[] L;
@@ -15,14 +16,14 @@ public class RIndex {
     private final int sizeOfText;
     private int currentSuffix;
 
-    // to be deleted later
-    private final FMIndex fmIndex;
-
-    public RIndex (char[] bwt, int[] suffixes) {
+    public RIndex (char[] bwt, int[] occArray, int[] suffixes) {
 
         sizeOfText = bwt.length;
 
         lastSuffix = suffixes[suffixes.length-1];
+
+        bwtC =  FMIndex.computeC(bwt, occArray);
+
 
         ArrayList<Tuple<Character, Integer>> preRunLengthIndex = new ArrayList<>();
 
@@ -47,16 +48,24 @@ public class RIndex {
             characters.add(tuple.x);
         }
 
-        int[] occArray = new int[characters.size()];
-        for(int i=0; i<characters.size(); i++) {
-            Character[] list = characters.subList(0, i).toArray(Character[]::new);
-            occArray[i] = Collections.frequency(Arrays.asList(list), characters.get(i))+1;
-        }
 
         Character[] charactersPrime = characters.toArray(Character[]::new);
         sPrime = new char[charactersPrime.length];
         for(int i=0; i<sPrime.length; i++) {
             sPrime[i] = (char) charactersPrime[i];
+        }
+
+
+        int[] occArrayOfSPrime = new int[characters.size()];
+
+        HashMap<Character, Integer> toCalculateOccOfSPrime = new HashMap<>();
+        for (char c : bwtC.keySet()) {
+                toCalculateOccOfSPrime.put(c, 0);
+        }
+        for(int i=0; i<sPrime.length; i++) {
+            char current = sPrime[i];
+            toCalculateOccOfSPrime.put(current, toCalculateOccOfSPrime.get(current)+1);
+            occArrayOfSPrime[i] = toCalculateOccOfSPrime.get(current);
         }
 
 
@@ -104,16 +113,31 @@ public class RIndex {
             sPrimeChar[i] = (char) sPrime[i];
         }
 
-        // create FM index to take the needed information from, than delete it! NOT AS FOLLOW
-        fmIndex = new FMIndex(bwt, occArray, suffixes);
+        this.C = FMIndex.computeC(sPrime, occArrayOfSPrime);
 
-        this.C = fmIndex.computeC(sPrime, occArray);
+        this.characters = preRunLengthIndex.stream().map(x -> x.x).collect(Collectors.toSet()).toArray(Character[]::new);
+        Arrays.sort(this.characters);
 
-        this.characters = fmIndex.getCharacters();
 
-        bwtC =  fmIndex.getC();
+        for (int i=0; i<sPrimeChar.length; i+=64) {
 
-        //fmIndex = null;
+            HashMap<Character, Integer> hashMap = new HashMap<>();
+            for (char c : this.C.keySet()) {
+
+                int k = i;
+                while ( k>0 && sPrimeChar[k]!=c) k--;
+
+                if(k==0){
+                    if(sPrimeChar[0]==c) hashMap.put(c, occArrayOfSPrime[k]);
+                    else hashMap.put(c, 0);
+                } else {
+                    hashMap.put(c, occArrayOfSPrime[k]);
+                }
+
+            }
+            this.rankInitial.add(hashMap);
+        }
+
 
     }
 
@@ -138,15 +162,22 @@ public class RIndex {
             last = sizeOfText;
         }
 
+        //System.out.println(Arrays.toString(new int[]{first, last}));
+
         while (first<=last && i>0) {
 
             c = P[i-1];
             modifyLastSuffix(bwt, c, last);
 
-            first = bwtC.get(c) + rankOfBwtWithRIndex(c, first-1) + 1;
-            last = bwtC.get(c) + rankOfBwtWithRIndex(c, last);
+            first = bwtC.get(c) + rankOfBwtWithRIndex(c, this.sPrime, first-1) + 1;
+            last = bwtC.get(c) + rankOfBwtWithRIndex(c, this.sPrime, last);
+
+            //System.out.println(Arrays.toString(new int[]{first, last}));
+
             i--;
         }
+
+        System.out.println(Arrays.toString(new int[]{first, last}));
 
         if (last<first) {
             return new int[]{};
@@ -159,38 +190,36 @@ public class RIndex {
     private void modifyLastSuffix(char[] bwt, char c, int last) {
         int k;
         k = getRunNumAndIndex(last).y;
-        if(bwt[last-1]==c) {
+        int indexInBWT = last-1;
+        if(bwt[indexInBWT]==c) {
             currentSuffix = currentSuffix - 1;
         } else {
-            int p = fmIndex.rank(c, this.sPrime,k-1);
+            int p = rankWithR(c, this.sPrime,k-1);
             int index = this.C.get(c) + p - 1;
-            currentSuffix = this.L[index] - 1;
+            currentSuffix = this.L[ index < this.L.length ? index : index-1] - 1;
         }
     }
 
-    public int rankOfBwtWithRIndex (char c, int q) {
+    public int rankOfBwtWithRIndex (char c, char[] bwt, int q) {
 
         Tuple<Integer, Integer> tuple = getRunNumAndIndex(q);
         int j = tuple.x, k = tuple.y;
-        char cPrime = sPrime[k-1];
-        int p = fmIndex.rank(c, sPrime, k-1);
 
-        // not in paper
-        boolean hasPreRuns = true;
-        if(p==0 && cPrime==c && q==j) {
-            return 1;
-        }
-        if(p==0 && cPrime!=c) {
-            return 0;
-        }
+        char cPrime = this.sPrime[k-1];
+
+        int p = rankWithR(c, this.sPrime, k-1);
+
         if(p==0) {
-            p++;
-            hasPreRuns = false;
+            if(c==cPrime) return q - j + 1;
+            else return 0;
         }
 
-        if (c == cPrime && hasPreRuns) {
-            return R[this.C.get(c)+p-1] + (q - j + 1);
-        } else return R[this.C.get(c)+p-1];
+        int index = this.C.get(c)+p-1;
+
+        if (c == cPrime) {
+            return R[index] + (q - j + 1);
+        } else return R[index];
+
     }
 
     private Tuple<Integer, Integer> getRunNumAndIndex(int i) {
@@ -208,6 +237,28 @@ public class RIndex {
             return new Tuple<>(preData.get(runNum), preData.indexOf(preData.get(runNum))+1 );
         }
     }
+
+    public int rankWithR(char c, char[] sPrime, int q){
+
+        q--;
+
+        int index = q/64;
+
+        if (q % 64 == 0) {
+            return this.rankInitial.get(index).get(c);
+        } else {
+
+            int preValue = this.rankInitial.get(index).get(c);
+            int toAdd = 0;
+
+            for (int i = (64*index)+1; i<=q; i++) {
+                if(this.sPrime[i]==c) toAdd++;
+            }
+            return preValue+toAdd;
+        }
+
+    }
+
 
     public int[] locate (char[] P, char[] bwt) {
 

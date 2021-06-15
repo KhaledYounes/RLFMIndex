@@ -2,6 +2,7 @@ import java.util.*;
 
 public class RLFMIndex {
 
+    // code to get the occurrences array.
     private static void unbwt(char[] T, char[] U, int[] LF, int n, int pidx) {
         int[] C = new int[256];
         int i, t;
@@ -17,7 +18,19 @@ public class RLFMIndex {
 
     public static void main(String[] args) {
 
-        char[] T = "$alabaralalabarda".toCharArray();
+        long beforeUsedMem, afterUsedMem;
+
+        char[] options = {'A', 'C', 'G', 'T'};
+        char[] result =  new char[100000];
+        Random r = new Random();
+        result[0] = '$';
+        for(int i=1;i<result.length;i++){
+            result[i]=options[r.nextInt(options.length)];
+        }
+
+        //result = "$alabaralalabarda".toCharArray();
+
+        char[] T = result;
         int n = T.length;
         char[] U = new char[n];
         char[] V = new char[n];
@@ -26,7 +39,7 @@ public class RLFMIndex {
 
         int pidx = sais.bwtransform(T, U, A, n);
 
-        char[] text = "$alabaralalabarda".toCharArray();
+        char[] text = result;
         int m = text.length;
         int[] SA = new int[m];
 
@@ -38,31 +51,59 @@ public class RLFMIndex {
         for (int i=0; i<A.length; i++)
             A[i] += 1;
 
-        System.out.println(Arrays.toString(V));
-        System.out.println(Arrays.toString(U));
-        System.out.println(Arrays.toString(SA));
-
-        FMIndex fmIndex = new FMIndex(U, A, SA);
+        //System.out.println(Arrays.toString(V));
+        //System.out.println(Arrays.toString(U));
+        //System.out.println(Arrays.toString(SA));
 
         System.out.println("________________");
 
-        System.out.println(Arrays.toString(fmIndex.getRange(new char[]{'l', 'a'}, U)));
-        System.out.println(Arrays.toString(fmIndex.locate(new char[]{'l', 'a'}, U)));
+        beforeUsedMem = Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory();
+        FMIndex fmIndex = new FMIndex(U, A, SA);
+        afterUsedMem = Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory();
+        System.out.println("FM index needed: "+ (afterUsedMem-beforeUsedMem)/1024/1024 + " megabytes");
+
+
+        // new char[]{'C', 'G', 'A', 'A', 'A', 'T', 'T'}
+        //System.out.println(Arrays.toString(fmIndex.getRange(new char[]{'C', 'G', 'A', 'A', 'T'}, U)));
+        System.out.println(Arrays.toString(fmIndex.locate(new char[]{'C', 'G', 'A', 'A', 'A', 'T', 'T', 'G'}, U)));
+
+        //System.out.println(Arrays.toString(fmIndex.getRange(new char[]{'l', 'a'}, U)));
+        //System.out.println(Arrays.toString(fmIndex.locate(new char[]{'l', 'a'}, U)));
+
 
         System.out.println("_________________");
 
-        RIndex rIndex = new RIndex(U, SA);
 
-        System.out.println(Arrays.toString(rIndex.getSPrime()));
-        System.out.println(Arrays.toString(rIndex.getR()));
-        System.out.println(new TreeMap<>(rIndex.getCOfRIndex()).toString());
-        System.out.println(Arrays.toString(rIndex.getL()));
-        System.out.println(new TreeMap<>(rIndex.getDistances()).toString());
+        beforeUsedMem = Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory();
+        RIndex rIndex = new RIndex(U, A, SA);
+        afterUsedMem = Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory();
+        System.out.println("R index needed: "+ (afterUsedMem-beforeUsedMem)/1024/1024 + " megabytes");
 
-        System.out.println("__________________");
+        //System.out.println(Arrays.toString(rIndex.getSPrime()));
+        //System.out.println(Arrays.toString(rIndex.getR()));
+        //System.out.println(new TreeMap<>(rIndex.getCOfRIndex()).toString());
+        //System.out.println(Arrays.toString(rIndex.getL()));
+        //System.out.println(new TreeMap<>(rIndex.getDistances()).toString());
 
-        System.out.println(Arrays.toString(rIndex.getRangeWithRIndex(new char[]{'l', 'a'}, U)));
-        System.out.println(Arrays.toString(rIndex.locate(new char[]{'l', 'a'}, U)));
+
+        //System.out.println(Arrays.toString(rIndex.getRangeWithRIndex(new char[]{'C', 'G', 'A', 'A', 'T'}, U)));
+        System.out.println(Arrays.toString(rIndex.locate(new char[]{'C', 'G', 'A', 'A', 'A', 'T', 'T', 'G'}, U)));
+
+        //System.out.println(Arrays.toString(rIndex.getRangeWithRIndex(new char[]{'l', 'a'}, U)));
+        //System.out.println(Arrays.toString(rIndex.locate(new char[]{'l', 'a'}, U)));
+
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            int current = scanner.nextInt();
+            if(current==-1) break;
+            else {
+                System.out.println(Arrays.toString(new char[]{result[current], result[current+1], result[current+2],
+                        result[current+3], result[current+4], result[current+5], result[current+6], result[current+7]}));
+            }
+        }
+
+        System.out.println();
 
     }
 
