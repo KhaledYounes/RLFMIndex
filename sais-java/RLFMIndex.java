@@ -63,9 +63,9 @@ public class RLFMIndex {
         System.out.println("FM index needed: "+ (afterUsedMem-beforeUsedMem)/1024/1024 + " megabytes");
 
 
-        // new char[]{'C', 'G', 'A', 'A', 'A', 'T', 'T'}
-        //System.out.println(Arrays.toString(fmIndex.getRange(new char[]{'C', 'G', 'A', 'A', 'T'}, U)));
-        System.out.println(Arrays.toString(fmIndex.locate(new char[]{'C', 'G', 'A', 'A', 'A', 'T', 'T', 'G'}, U)));
+        char[] pattern = new char[]{'C', 'G', 'A', 'A', 'T', 'T', 'G'};
+        //System.out.println(Arrays.toString(fmIndex.getRange(pattern, U)));
+        System.out.println(Arrays.toString(fmIndex.locate(pattern, U)));
 
         //System.out.println(Arrays.toString(fmIndex.getRange(new char[]{'l', 'a'}, U)));
         //System.out.println(Arrays.toString(fmIndex.locate(new char[]{'l', 'a'}, U)));
@@ -86,8 +86,8 @@ public class RLFMIndex {
         //System.out.println(new TreeMap<>(rIndex.getDistances()).toString());
 
 
-        //System.out.println(Arrays.toString(rIndex.getRangeWithRIndex(new char[]{'C', 'G', 'A', 'A', 'T'}, U)));
-        System.out.println(Arrays.toString(rIndex.locate(new char[]{'C', 'G', 'A', 'A', 'A', 'T', 'T', 'G'}, U)));
+        //System.out.println(Arrays.toString(rIndex.getRangeWithRIndex(pattern, U)));
+        System.out.println(Arrays.toString(rIndex.locate(pattern, U)));
 
         //System.out.println(Arrays.toString(rIndex.getRangeWithRIndex(new char[]{'l', 'a'}, U)));
         //System.out.println(Arrays.toString(rIndex.locate(new char[]{'l', 'a'}, U)));
@@ -98,8 +98,9 @@ public class RLFMIndex {
             int current = scanner.nextInt();
             if(current==-1) break;
             else {
-                System.out.println(Arrays.toString(new char[]{result[current], result[current+1], result[current+2],
-                        result[current+3], result[current+4], result[current+5], result[current+6], result[current+7]}));
+                char[] extract = new char[pattern.length];
+                System.arraycopy(result, current, extract, 0, extract.length);
+                System.out.println(Arrays.toString(extract));
             }
         }
 
