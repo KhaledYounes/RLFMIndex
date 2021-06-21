@@ -1,23 +1,30 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class FMIndex {
 
-    private HashMap<Character, Integer> C;
-    private final ArrayList<HashMap<Character, Integer>> rankInitial = new ArrayList<>();
-    private final Character[] characters;
+    private final int[] C;
+    private final int[][] rankInitial;
+    private final char[] bwtOfText;
+    private final char[] characters;
     int[] suffixes;
 
     FMIndex(char[] bwt, int[] occArray, int[] suffixes) {
 
+        ArrayList<HashMap<Character, Integer>> preRankInitial = new ArrayList<>();
+
         this.suffixes = suffixes;
 
-        this.C = computeC(bwt, occArray);
+        HashMap<Character, Integer> toBeC = new HashMap<>();
+
+        toBeC = computeC(bwt, occArray);
 
         for (int i=0; i<bwt.length; i+=64) {
             HashMap<Character, Integer> hashMap = new HashMap<>();
-            for (char c : C.keySet()) {
+            for (char c : toBeC.keySet()) {
 
                 int k = i;
                 while ( k>0 && bwt[k]!=c) k--;
@@ -29,11 +36,27 @@ public class FMIndex {
                     hashMap.put(c, occArray[k]);
                 }
             }
-            rankInitial.add(hashMap);
+            preRankInitial.add(hashMap);
         }
 
-        this.characters = C.keySet().toArray(Character[]::new);
+        Character[] charactersCharacter = toBeC.keySet().toArray(Character[]::new);
+        this.characters = new char[charactersCharacter.length];
+        for (int i=0; i<this.characters.length; i++) {
+            this.characters[i] = charactersCharacter[i];
+        }
         Arrays.sort(this.characters);
+
+        this.bwtOfText = bwt;
+
+        Rank rank = new Rank(preRankInitial);
+
+        this.rankInitial = rank.getRankInitial();
+
+        this.C = new int[this.characters.length];
+
+        for(int i=0; i<this.characters.length; i++) {
+            this.C[i] = toBeC.get(this.characters[i]);
+        }
 
     }
 
@@ -85,10 +108,10 @@ public class FMIndex {
         int index = q/64;
 
         if (q % 64 == 0) {
-            return rankInitial.get(index).get(c);
+            return rankInitial[index][Arrays.binarySearch(this.characters, c)];
         } else {
 
-            int preValue = rankInitial.get(index).get(c);
+            int preValue = rankInitial[index][Arrays.binarySearch(this.characters, c)];
             int toAdd = 0;
 
             for (int i = (64*index)+1; i<=q; i++) {
@@ -103,16 +126,23 @@ public class FMIndex {
 
         if (P.length==0) return new int[]{};
 
+        List<Integer> integerList = Arrays.stream(this.C).boxed().collect(Collectors.toList());
+        List<Character> characterList = new ArrayList<>();
+        for (char c : this.characters) {
+            characterList.add(c);
+        }
+
+
         for (char l : P) {
-            if(!C.containsKey(l)) return new int[]{};
+            if(!characterList.contains(l)) return new int[]{};
         }
 
         int i = P.length-1;
         char c = P[i], nc = nextGreatestAlphabet(this.characters, c);
 
 
-        int first = C.get(c)+1;
-        int last = C.get(nc);
+        int first = integerList.get(characterList.indexOf(c))+1;
+        int last = integerList.get(characterList.indexOf(nc));
 
 
         if(c==nc) {
@@ -123,8 +153,9 @@ public class FMIndex {
 
         while (first<=last && i>0) {
             c = P[i-1];
-            first = C.get(c) + rank(c, bwt, first-1) + 1;
-            last = C.get(c) + rank(c, bwt, last);
+
+            first = integerList.get(characterList.indexOf(c)) + rank(c, bwt, first-1) + 1;
+            last = integerList.get(characterList.indexOf(c)) + rank(c, bwt, last);
 
             //System.out.println(Arrays.toString(new int[]{first, last}));
 
@@ -141,7 +172,7 @@ public class FMIndex {
 
     }
 
-    public static char nextGreatestAlphabet(Character[] alphabets, char c)
+    public static char nextGreatestAlphabet(char[] alphabets, char c)
     {
 
         int l = 0;
@@ -183,15 +214,19 @@ public class FMIndex {
 
     }
 
-    public ArrayList<HashMap<Character, Integer>> getRankInitial() {
+    public char[] getBwtOfText() {
+        return bwtOfText;
+    }
+
+    public int[][] getRankInitial() {
         return rankInitial;
     }
 
-    public HashMap<Character, Integer> getC() {
+    public int[] getC() {
         return C;
     }
 
-    public Character[] getCharacters() {
+    public char[] getCharacters() {
         return characters;
     }
 

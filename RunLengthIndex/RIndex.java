@@ -3,15 +3,16 @@ import java.util.stream.Collectors;
 
 public class RIndex {
 
-    private final Character[] characters;
-    private final HashMap<Character, Integer> bwtC;
-    private final ArrayList<Integer> preData = new ArrayList<>();
-    private final HashMap<Character, Integer> C;
-    private final ArrayList<HashMap<Character, Integer>> rankInitial = new ArrayList<>();
+    private final char[] characters;
+    private final int[] bwtC;
+    private final int[] preData;
+    private final int[] C;
+    private final int[][] rankInitial;
     private final char[] sPrime;
-    private final Integer[] R;
-    private final Integer[] L;
-    private final HashMap<Integer, Integer> distances = new HashMap<>();
+    private final int[] R;
+    private final int[] L;
+    private final int[] keyDistance;
+    private final int[] valueDistance;
     private final int lastSuffix;
     private final int sizeOfText;
     private int currentSuffix;
@@ -22,25 +23,34 @@ public class RIndex {
 
         lastSuffix = suffixes[suffixes.length-1];
 
-        bwtC =  FMIndex.computeC(bwt, occArray);
+        HashMap<Character, Integer> toBeBwtC = new HashMap<>();
 
+        toBeBwtC =  FMIndex.computeC(bwt, occArray);
 
         ArrayList<Tuple<Character, Integer>> preRunLengthIndex = new ArrayList<>();
 
         ArrayList<Tuple<Character, Integer>> toCalculateL = new ArrayList<>();
 
+        ArrayList<Integer> prePreData = new ArrayList<>();
+
+        HashMap<Integer, Integer> distances = new HashMap<>();
+
+        ArrayList<HashMap<Character, Integer>> preRankInitial = new ArrayList<>();
+
         preRunLengthIndex.add(new Tuple<>(bwt[0], 0));
         toCalculateL.add(new Tuple<>(bwt[0], 0));
-        preData.add(1);
+        prePreData.add(1);
 
         for (int i=1; i<sizeOfText; i++) {
             if(bwt[i]!=bwt[i-1]) {
                 preRunLengthIndex.add(new Tuple<>(bwt[i], i));
                 toCalculateL.add(new Tuple<>(bwt[i], i));
                 distances.put(suffixes[i], (suffixes[i-1]-suffixes[i]));
-                preData.add(i+1);
+                prePreData.add(i+1);
             }
         }
+
+        this.preData = Arrays.stream(prePreData.toArray(Integer[]::new)).mapToInt(Integer::intValue).toArray();
 
         ArrayList<Character> characters = new ArrayList<>();
 
@@ -59,7 +69,7 @@ public class RIndex {
         int[] occArrayOfSPrime = new int[characters.size()];
 
         HashMap<Character, Integer> toCalculateOccOfSPrime = new HashMap<>();
-        for (char c : bwtC.keySet()) {
+        for (char c : toBeBwtC.keySet()) {
                 toCalculateOccOfSPrime.put(c, 0);
         }
         for(int i=0; i<sPrime.length; i++) {
@@ -98,7 +108,7 @@ public class RIndex {
             preRunLengthIndex.get(i).y = toUpdate;
         }
 
-        L = toBeL.toArray(Integer[]::new);
+        L = Arrays.stream(toBeL.toArray(Integer[]::new)).mapToInt(Integer::intValue).toArray();
 
         ArrayList<Integer> indexes = new ArrayList<>();
 
@@ -106,23 +116,29 @@ public class RIndex {
             indexes.add(tuple.y);
         }
 
-        R = indexes.toArray(Integer[]::new);
+        R = Arrays.stream(indexes.toArray(Integer[]::new)).mapToInt(Integer::intValue).toArray();
 
         char[] sPrimeChar = new char[sPrime.length];
         for (int i=0; i< sPrimeChar.length; i++) {
             sPrimeChar[i] = (char) sPrime[i];
         }
 
-        this.C = FMIndex.computeC(sPrime, occArrayOfSPrime);
+        HashMap<Character, Integer> toBeC = new HashMap<>();
 
-        this.characters = preRunLengthIndex.stream().map(x -> x.x).collect(Collectors.toSet()).toArray(Character[]::new);
+        toBeC = FMIndex.computeC(sPrime, occArrayOfSPrime);
+
+        Character[] charactersCharacter = preRunLengthIndex.stream().map(x -> x.x).collect(Collectors.toSet()).toArray(Character[]::new);
+        this.characters = new char[charactersCharacter.length];
+        for (int i=0; i<this.characters.length; i++) {
+            this.characters[i] = charactersCharacter[i];
+        }
         Arrays.sort(this.characters);
 
 
         for (int i=0; i<sPrimeChar.length; i+=64) {
 
             HashMap<Character, Integer> hashMap = new HashMap<>();
-            for (char c : this.C.keySet()) {
+            for (char c : toBeC.keySet()) {
 
                 int k = i;
                 while ( k>0 && sPrimeChar[k]!=c) k--;
@@ -135,9 +151,26 @@ public class RIndex {
                 }
 
             }
-            this.rankInitial.add(hashMap);
+            preRankInitial.add(hashMap);
         }
 
+        Distance preDistances = new Distance(distances);
+        this.keyDistance = preDistances.getKeyArray();
+        this.valueDistance = preDistances.getValueArray();
+
+        Rank rank = new Rank(preRankInitial);
+
+        this.rankInitial = rank.getRankInitial();
+
+        this.bwtC = new int[toBeBwtC.size()];
+        for (int i=0; i<toBeBwtC.size(); i++) {
+            this.bwtC[i] = toBeBwtC.get(this.characters[i]);
+        }
+
+        this.C = new int[toBeC.size()];
+        for(int i=0; i<toBeC.size(); i++) {
+            this.C[i] = toBeC.get(this.characters[i]);
+        }
 
     }
 
@@ -145,8 +178,14 @@ public class RIndex {
 
         if (P.length==0) return new int[]{};
 
+        List<Integer> integerList = Arrays.stream(this.bwtC).boxed().collect(Collectors.toList());
+        List<Character> characterList = new ArrayList<>();
+        for (char c : this.characters) {
+            characterList.add(c);
+        }
+
         for (char l : P) {
-            if(!this.C.containsKey(l)) return new int[]{};
+            if(!characterList.contains(l)) return new int[]{};
         }
 
         int i = P.length-1;
@@ -155,8 +194,9 @@ public class RIndex {
         currentSuffix = lastSuffix;
         modifyLastSuffix(bwt, c, sizeOfText);
 
-        int first = bwtC.get(c)+1;
-        int last = bwtC.get(nc);
+        int first = integerList.get(characterList.indexOf(c))+1;
+        int last = integerList.get(characterList.indexOf(nc));
+
 
         if (nc==c) {
             last = sizeOfText;
@@ -169,8 +209,8 @@ public class RIndex {
             c = P[i-1];
             modifyLastSuffix(bwt, c, last);
 
-            first = bwtC.get(c) + rankOfBwtWithRIndex(c, this.sPrime, first-1) + 1;
-            last = bwtC.get(c) + rankOfBwtWithRIndex(c, this.sPrime, last);
+            first = integerList.get(characterList.indexOf(c)) + rankOfBwtWithRIndex(c, this.sPrime, first-1) + 1;
+            last = integerList.get(characterList.indexOf(c)) + rankOfBwtWithRIndex(c, this.sPrime, last);
 
             //System.out.println(Arrays.toString(new int[]{first, last}));
 
@@ -188,6 +228,13 @@ public class RIndex {
     }
 
     private void modifyLastSuffix(char[] bwt, char c, int last) {
+
+        List<Integer> integerList = Arrays.stream(this.C).boxed().collect(Collectors.toList());
+        List<Character> characterList = new ArrayList<>();
+        for (char t : this.characters) {
+            characterList.add(t);
+        }
+
         int k;
         k = getRunNumAndIndex(last).y;
         int indexInBWT = last-1;
@@ -195,12 +242,18 @@ public class RIndex {
             currentSuffix = currentSuffix - 1;
         } else {
             int p = rankWithR(c, this.sPrime,k-1);
-            int index = this.C.get(c) + p - 1;
+            int index = integerList.get(characterList.indexOf(c)) + p - 1;
             currentSuffix = this.L[ index < this.L.length ? index : index-1] - 1;
         }
     }
 
     public int rankOfBwtWithRIndex (char c, char[] bwt, int q) {
+
+        List<Integer> integerList = Arrays.stream(this.C).boxed().collect(Collectors.toList());
+        List<Character> characterList = new ArrayList<>();
+        for (char t : this.characters) {
+            characterList.add(t);
+        }
 
         Tuple<Integer, Integer> tuple = getRunNumAndIndex(q);
         int j = tuple.x, k = tuple.y;
@@ -214,7 +267,7 @@ public class RIndex {
             else return 0;
         }
 
-        int index = this.C.get(c)+p-1;
+        int index =  integerList.get(characterList.indexOf(c))+p-1;
 
         if (c == cPrime) {
             return R[index] + (q - j + 1);
@@ -223,32 +276,35 @@ public class RIndex {
     }
 
     private Tuple<Integer, Integer> getRunNumAndIndex(int i) {
-        if(preData.contains(i)) return new Tuple<>(i, preData.indexOf(i)+1);
+        int index = Arrays.binarySearch(preData, i);
+        if(index>=0) return new Tuple<>(i, index+1);
         else {
-            int l = 0, r = preData.size()-1, runNum = 0;
+            int l = 0, r = preData.length-1, runNum = 0;
             while (l<=r) {
                 runNum = (l+r)/2;
-                if (i<preData.get(runNum)) {
+                if (i<preData[runNum]) {
                     r = runNum-1;
                 } else {
                     l = runNum+1;
                 }
             }
-            return new Tuple<>(preData.get(runNum), preData.indexOf(preData.get(runNum))+1 );
+            return new Tuple<>(preData[runNum], Arrays.binarySearch(preData, preData[runNum]) + 1 );
         }
     }
 
     public int rankWithR(char c, char[] sPrime, int q){
+
+        if(q<=0) return 0;
 
         q--;
 
         int index = q/64;
 
         if (q % 64 == 0) {
-            return this.rankInitial.get(index).get(c);
+            return this.rankInitial[index][Arrays.binarySearch(this.characters, c)];
         } else {
 
-            int preValue = this.rankInitial.get(index).get(c);
+            int preValue = this.rankInitial[index][Arrays.binarySearch(this.characters, c)];
             int toAdd = 0;
 
             for (int i = (64*index)+1; i<=q; i++) {
@@ -270,12 +326,17 @@ public class RIndex {
 
         result[result.length-1] = currentSuffix;
 
+        List<Integer> keyList = Arrays.stream(this.keyDistance).boxed().collect(Collectors.toList());
+
         for (int i= result.length-2; i>=0; i--) {
 
-            int indexInDistances = currentSuffix;
-            while (!distances.containsKey(indexInDistances)) indexInDistances--;
+            int key = currentSuffix;
 
-            currentSuffix = currentSuffix + distances.get(indexInDistances);
+            while (!keyList.contains(key)) {
+                key--;
+            }
+
+            currentSuffix = currentSuffix + this.valueDistance[keyList.indexOf(key)];
             result[i] = currentSuffix;
 
         }
@@ -284,7 +345,7 @@ public class RIndex {
 
     }
 
-    public ArrayList<Integer> getPreData() {
+    public int[] getPreData() {
         return preData;
     }
 
@@ -292,19 +353,27 @@ public class RIndex {
         return sPrime;
     }
 
-    public Integer[] getR() {
+    public int[] getR() {
         return R;
     }
 
-    public HashMap<Character, Integer> getCOfRIndex() {
+    public int[] getCOfRIndex() {
         return this.C;
     }
 
-    public HashMap<Integer, Integer> getDistances() {
-        return distances;
+    public int[] getBwtC() {
+        return bwtC;
     }
 
-    public Integer[] getL() {
+    public int[] getKeyDistance(){
+        return this.keyDistance;
+    }
+
+    public int[] getValueDistance(){
+        return this.valueDistance;
+    }
+
+    public int[] getL() {
         return L;
     }
 

@@ -1,3 +1,7 @@
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 
 public class RLFMIndex {
@@ -16,26 +20,47 @@ public class RLFMIndex {
         C = null;
     }
 
+    private static char[] getReadFile (String filePath)
+    {
+        StringBuilder contentBuilder = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath)))
+        {
+
+            String sCurrentLine;
+            while ((sCurrentLine = br.readLine()) != null)
+            {
+                contentBuilder.append(sCurrentLine).append("\n");
+            }
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+        return contentBuilder.toString().toCharArray();
+    }
+
     public static void main(String[] args) {
 
         long beforeUsedMem, afterUsedMem;
+
 
         char[] options = {'A', 'C', 'G', 'T'};
         char[] result =  new char[100000];
         Random r = new Random();
         result[0] = '$';
         for(int i=1;i<result.length;i++){
+            //result[i]= 'A';
+            //if(i%100000==0) result[i]='C';
             result[i]=options[r.nextInt(options.length)];
         }
 
-        //result = "$alabaralalabarda".toCharArray();
+        //char[] result = getReadFile("C:\\Users\\Admin\\Downloads\\dna\\dna");
 
         char[] T = result;
         int n = T.length;
         char[] U = new char[n];
         char[] V = new char[n];
         int[] A = new int[n];
-
 
         int pidx = sais.bwtransform(T, U, A, n);
 
@@ -63,16 +88,14 @@ public class RLFMIndex {
         System.out.println("FM index needed: "+ (afterUsedMem-beforeUsedMem)/1024/1024 + " megabytes");
 
 
-        char[] pattern = new char[]{'C', 'G', 'A', 'A', 'T', 'T', 'G'};
+        char[] pattern = new char[]{'C', 'A', 'A', 'A', 'T', 'G', 'C'};
         //System.out.println(Arrays.toString(fmIndex.getRange(pattern, U)));
         System.out.println(Arrays.toString(fmIndex.locate(pattern, U)));
 
         //System.out.println(Arrays.toString(fmIndex.getRange(new char[]{'l', 'a'}, U)));
         //System.out.println(Arrays.toString(fmIndex.locate(new char[]{'l', 'a'}, U)));
 
-
         System.out.println("_________________");
-
 
         beforeUsedMem = Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory();
         RIndex rIndex = new RIndex(U, A, SA);
