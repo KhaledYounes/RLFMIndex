@@ -12,13 +12,33 @@ public class FMIndex {
     private final char[] characters;
     int[] suffixes;
 
-    FMIndex(char[] bwt, int[] occArray, int[] suffixes) {
+    FMIndex(String Text) {
+
+        char[] T = Text.toCharArray();
+        int n = T.length;
+        char[] bwt = new char[n];
+        char[] V = new char[n];
+        int[] occArray = new int[n];
+
+        int pidx = sais.bwtransform(T, bwt, occArray, n);
+
+        int m = T.length;
+        int[] suffixes = new int[m];
+
+        sais.suffixsort(T, suffixes, m);
+        suffixes[0] = m;
+
+        unbwt(bwt, V, occArray, n, pidx);
+
+        for (int i=0; i<occArray.length; i++)
+            occArray[i] += 1;
+
 
         ArrayList<HashMap<Character, Integer>> preRankInitial = new ArrayList<>();
 
         this.suffixes = suffixes;
 
-        HashMap<Character, Integer> toBeC = new HashMap<>();
+        HashMap<Character, Integer> toBeC;
 
         toBeC = computeC(bwt, occArray);
 
@@ -103,15 +123,20 @@ public class FMIndex {
 
     public int rank(char c, char[] bwt, int q){
 
+        List<Character> characterList = new ArrayList<>();
+        for (char character : this.characters) characterList.add(character);
+
+        if (!characterList.contains(c) || q<=0) return 0;
+
         q--;
 
         int index = q/64;
 
         if (q % 64 == 0) {
-            return rankInitial[index][Arrays.binarySearch(this.characters, c)];
+            return rankInitial[index][characterList.indexOf(c)];
         } else {
 
-            int preValue = rankInitial[index][Arrays.binarySearch(this.characters, c)];
+            int preValue = rankInitial[index][characterList.indexOf(c)];
             int toAdd = 0;
 
             for (int i = (64*index)+1; i<=q; i++) {
@@ -122,7 +147,7 @@ public class FMIndex {
 
     }
 
-    public int[] getRange (char[] P, char[] bwt) {
+    public int[] getRange (char[] P) {
 
         if (P.length==0) return new int[]{};
 
@@ -131,7 +156,6 @@ public class FMIndex {
         for (char c : this.characters) {
             characterList.add(c);
         }
-
 
         for (char l : P) {
             if(!characterList.contains(l)) return new int[]{};
@@ -146,7 +170,7 @@ public class FMIndex {
 
 
         if(c==nc) {
-            last = bwt.length;
+            last = bwtOfText.length;
         }
 
         //System.out.println(Arrays.toString(new int[]{first, last}));
@@ -154,8 +178,8 @@ public class FMIndex {
         while (first<=last && i>0) {
             c = P[i-1];
 
-            first = integerList.get(characterList.indexOf(c)) + rank(c, bwt, first-1) + 1;
-            last = integerList.get(characterList.indexOf(c)) + rank(c, bwt, last);
+            first = integerList.get(characterList.indexOf(c)) + rank(c, this.bwtOfText, first-1) + 1;
+            last = integerList.get(characterList.indexOf(c)) + rank(c, this.bwtOfText, last);
 
             //System.out.println(Arrays.toString(new int[]{first, last}));
 
@@ -195,9 +219,9 @@ public class FMIndex {
 
     }
 
-    public int[] locate (char[] P, char[] bwt) {
+    public int[] locate (char[] P) {
 
-        int [] range = getRange(P, bwt);
+        int [] range = getRange(P);
 
         if (range.length==0) return new int[]{};
 
@@ -212,6 +236,20 @@ public class FMIndex {
 
         return result;
 
+    }
+
+    // code to get the occurrences array.
+    private static void unbwt(char[] T, char[] U, int[] LF, int n, int pidx) {
+        int[] C = new int[256];
+        int i, t;
+        for(i = 0; i < 256; ++i) { C[i] = 0; }
+        for(i = 0; i < n; ++i) { LF[i] = C[(int)(T[i] & 0xff)]++; }
+        for(i = 0, t = 0; i < 256; ++i) { t += C[i]; C[i] = t - C[i]; }
+        for(i = n - 1, t = 0; 0 <= i; --i) {
+            t = LF[t] + C[(int)((U[i] = T[t]) & 0xff)];
+            t += (t < pidx) ? 1 : 0;
+        }
+        C = null;
     }
 
     public char[] getBwtOfText() {
