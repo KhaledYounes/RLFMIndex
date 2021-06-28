@@ -24,20 +24,28 @@ public class RLFMIndex {
         return contentBuilder.toString();
     }
 
+
     public static void main(String[] args) {
 
-        long beforeUsedMem, afterUsedMem;
-
         /*
+
         char[] options = {'A', 'C', 'G', 'T'};
         char[] result =  new char[100000];
         Random r = new Random();
-        result[0] = '$';
-        for(int i=1;i<result.length;i++){
+        //result[0] = '$';
+        for(int i=0;i<result.length;i++){
             //result[i]= 'A';
             //if(i%100000==0) result[i]='C';
             result[i]=options[r.nextInt(options.length)];
         }
+
+        StringBuilder string = new StringBuilder(new String(result));
+
+        String toBeAdded = string.toString();
+
+        string.append(toBeAdded.repeat(9));
+
+        String input = '$' + string.toString();
 
          */
 
@@ -45,32 +53,34 @@ public class RLFMIndex {
 
         data = data.replace("\n", "");
 
+        data = data.substring(0, 1000000);
+
         char[] result = new char[1000001];
         result[0] = '$';
         System.arraycopy(data.toCharArray(), 0, result, 1, result.length - 1);
 
+        data = null;
 
         System.out.println("________________");
 
-        beforeUsedMem = Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory();
         FMIndex fmIndex = new FMIndex(new String(result));
-        afterUsedMem = Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory();
-        System.out.println("FM index needed: "+ (afterUsedMem-beforeUsedMem)/1024/1024 + " megabytes");
 
+        //System.out.println("FM index needed: "+ /1024/1024 + " megabytes");
 
-        char[] pattern = new char[]{'A', 'T', 'T', 'T', 'G', 'C', 'A', 'A', 'T'};
+        char[] pattern = new char[]{'A', 'A', 'T', 'T', 'C', 'A', 'A', 'T'};
         //System.out.println(Arrays.toString(fmIndex.getRange(pattern)));
         System.out.println(Arrays.toString(fmIndex.locate(pattern)));
 
         System.out.println("_________________");
 
-        beforeUsedMem = Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory();
+
         RIndex rIndex = new RIndex(new String(result));
-        afterUsedMem = Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory();
-        System.out.println("R index needed: "+ (afterUsedMem-beforeUsedMem)/1024/1024 + " megabytes");
+
+        //System.out.println("R index needed: "+ /1024/1024 + " megabytes");
 
         //System.out.println(Arrays.toString(rIndex.getRangeWithRIndex(pattern)));
         System.out.println(Arrays.toString(rIndex.locate(pattern)));
+
 
         Scanner scanner = new Scanner(System.in);
 
@@ -83,6 +93,7 @@ public class RLFMIndex {
                 System.out.println(Arrays.toString(extract));
             }
         }
+
 
         System.out.println();
 

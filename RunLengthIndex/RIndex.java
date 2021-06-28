@@ -357,11 +357,13 @@ public class RIndex {
 
         List<Integer> keyList = Arrays.stream(this.keyDistance).boxed().collect(Collectors.toList());
 
+        HashSet<Integer> integerHashSet = new HashSet<>(keyList);
+
         for (int i= result.length-2; i>=0; i--) {
 
             int key = currentSuffix;
 
-            while (!keyList.contains(key)) {
+            while (!integerHashSet.contains(key)) {
                 key--;
             }
 
