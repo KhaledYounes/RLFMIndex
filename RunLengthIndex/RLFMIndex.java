@@ -53,11 +53,11 @@ public class RLFMIndex {
 
         data = data.replace("\n", "");
 
-        data = data.substring(0, 1000000);
+        data = data.substring(0, 10000000);
 
-        char[] result = new char[1000001];
+        char[] result = new char[10000001];
         result[0] = '$';
-        System.arraycopy(data.toCharArray(), 0, result, 1, result.length - 1);
+        System.arraycopy(data.toCharArray(), 0, result, 1, result.length-1);
 
         data = null;
 
@@ -67,12 +67,11 @@ public class RLFMIndex {
 
         //System.out.println("FM index needed: "+ /1024/1024 + " megabytes");
 
-        char[] pattern = new char[]{'A', 'A', 'T', 'T', 'C', 'A', 'A', 'T'};
+        char[] pattern = new char[]{'A', 'A', 'T', 'T', 'C', 'A', 'A', 'T', 'G', 'G', 'C'};
         //System.out.println(Arrays.toString(fmIndex.getRange(pattern)));
         System.out.println(Arrays.toString(fmIndex.locate(pattern)));
 
         System.out.println("_________________");
-
 
         RIndex rIndex = new RIndex(new String(result));
 
@@ -80,7 +79,6 @@ public class RLFMIndex {
 
         //System.out.println(Arrays.toString(rIndex.getRangeWithRIndex(pattern)));
         System.out.println(Arrays.toString(rIndex.locate(pattern)));
-
 
         Scanner scanner = new Scanner(System.in);
 

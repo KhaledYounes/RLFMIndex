@@ -34,6 +34,9 @@ public class FMIndex {
             occArray[i] += 1;
 
 
+        V = null;
+        T = null;
+
         ArrayList<HashMap<Character, Integer>> preRankInitial = new ArrayList<>();
 
         this.suffixes = suffixes;
@@ -42,16 +45,20 @@ public class FMIndex {
 
         toBeC = computeC(bwt, occArray);
 
+
         for (int i=0; i<bwt.length; i+=64) {
             HashMap<Character, Integer> hashMap = new HashMap<>();
             for (char c : toBeC.keySet()) {
 
                 int k = i;
-                while ( k>0 && bwt[k]!=c) k--;
+                int lastIndex = i - 64;
+                while ( k>0 && k>lastIndex && bwt[k]!=c) k--;
 
                 if(k==0){
                     if(bwt[0]==c) hashMap.put(c, occArray[k]);
                     else hashMap.put(c, 0);
+                } else if (k==lastIndex){
+                    hashMap.put(c, preRankInitial.get(k/64).get(c));
                 } else {
                     hashMap.put(c, occArray[k]);
                 }
@@ -59,24 +66,35 @@ public class FMIndex {
             preRankInitial.add(hashMap);
         }
 
+        occArray = null;
+
         Character[] charactersCharacter = toBeC.keySet().toArray(Character[]::new);
         this.characters = new char[charactersCharacter.length];
         for (int i=0; i<this.characters.length; i++) {
             this.characters[i] = charactersCharacter[i];
         }
+
+        charactersCharacter = null;
+
         Arrays.sort(this.characters);
 
         this.bwtOfText = bwt;
 
         Rank rank = new Rank(preRankInitial);
 
+        preRankInitial = null;
+
         this.rankInitial = rank.getRankInitial();
+
+        rank = null;
 
         this.C = new int[this.characters.length];
 
         for(int i=0; i<this.characters.length; i++) {
             this.C[i] = toBeC.get(this.characters[i]);
         }
+
+        toBeC = null;
 
     }
 
