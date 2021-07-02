@@ -4,10 +4,9 @@ import java.util.stream.Collectors;
 public class RIndex {
 
     private final char[] characters;
-    private final char[] bwtOfText;
     private final int[] bwtC;
-    private final int[][] rankInitial;
     private final char[] sPrime;
+    private final int[][] rankInitial;
     private final int[] preData;
     private final int[] C;
     private final int[] R;
@@ -39,8 +38,6 @@ public class RIndex {
         for (int i=0; i<occArray.length; i++)
             occArray[i] += 1;
 
-
-        this.bwtOfText = bwt;
 
         sizeOfText = bwt.length;
 
@@ -242,7 +239,7 @@ public class RIndex {
         char c = P[i], nc = FMIndex.nextGreatestAlphabet(this.characters, c);
 
         currentSuffix = lastSuffix;
-        modifyLastSuffix(this.bwtOfText, c, sizeOfText);
+        modifyLastSuffix(c, sizeOfText);
 
         int first = integerList.get(characterList.indexOf(c))+1;
         int last = integerList.get(characterList.indexOf(nc));
@@ -258,7 +255,7 @@ public class RIndex {
         while (first<=last && i>0) {
 
             c = P[i-1];
-            modifyLastSuffix(this.bwtOfText, c, last);
+            modifyLastSuffix(c, last);
 
             first = integerList.get(characterList.indexOf(c)) + rankOfBwtWithRIndex(c, this.sPrime, first-1) + 1;
             last = integerList.get(characterList.indexOf(c)) + rankOfBwtWithRIndex(c, this.sPrime, last);
@@ -280,7 +277,7 @@ public class RIndex {
 
     }
 
-    private void modifyLastSuffix(char[] bwt, char c, int last) {
+    private void modifyLastSuffix(char c, int last) {
 
         List<Integer> integerList = Arrays.stream(this.C).boxed().collect(Collectors.toList());
         List<Character> characterList = new ArrayList<>();
@@ -288,10 +285,9 @@ public class RIndex {
             characterList.add(t);
         }
 
-        int k;
-        k = getRunNumAndIndex(last).y;
-        int indexInBWT = last-1;
-        if(bwt[indexInBWT]==c) {
+        int k = getRunNumAndIndex(last).y;
+
+        if(this.sPrime[k-1]==c) {
             currentSuffix = currentSuffix - 1;
         } else {
             int p = rankWithR(c, this.sPrime,k-1);
