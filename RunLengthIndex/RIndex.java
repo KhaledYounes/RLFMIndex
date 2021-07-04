@@ -327,14 +327,15 @@ public class RIndex {
     private Tuple<Integer, Integer> getRunNumAndIndex(int i) {
 
         List<Integer> integerList = Arrays.stream(preData).boxed().collect(Collectors.toList());
+        HashSet<Integer> integerHashSet = new HashSet<>(integerList);
 
-        if(integerList.contains(i)) return new Tuple<>(i, integerList.indexOf(i)+1);
+        if(integerHashSet.contains(i)) return new Tuple<>(i, integerList.indexOf(i)+1);
         else {
 
             int runNum = i-1;
 
             while (runNum>=0) {
-                if(integerList.contains(runNum)) {
+                if(integerHashSet.contains(runNum)) {
                     return new Tuple<>(runNum, integerList.indexOf(runNum) + 1 );
                 } else {
                     runNum--;

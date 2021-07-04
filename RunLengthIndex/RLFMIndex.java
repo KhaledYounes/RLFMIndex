@@ -66,11 +66,11 @@ public class RLFMIndex {
 
         String data = getReadFile("C:\\Users\\Admin\\Downloads\\dna\\dna");
 
-        data = data.replace("\n", "");
+        //data = data.replace("\n", "");
 
-        data = data.substring(0, 1000000);
+        data = data.substring(0, 10000000);
 
-        data = "$" + data;
+        data = Character.MIN_VALUE + data;
 
         /*
         System.out.println("Length of the file is: " + data.length());
@@ -104,7 +104,6 @@ public class RLFMIndex {
 
         System.out.println("Run length of the bwt of the file is: " + runLength);
 
-
          */
 
         //char[] result = new char[10000001];
@@ -120,7 +119,8 @@ public class RLFMIndex {
 
         //System.out.println("FM index needed: "+ /1024/1024 + " megabytes");
 
-        char[] pattern = new char[]{'A', 'A', 'T', 'T', 'C', 'A', 'A', 'T', 'A'};
+        char[] pattern = new char[]{'A', 'A', 'G', 'T', 'T', 'A', 'A', 'C', 'C', 'A'};
+        //char[] pattern = "<title>Java Language Home Page</title>".toCharArray();
         //System.out.println(Arrays.toString(fmIndex.getRange(pattern)));
         System.out.println(Arrays.toString(fmIndex.locate(pattern)));
 

@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class FMIndex {
@@ -10,6 +7,7 @@ public class FMIndex {
     private final int[][] rankInitial;
     private final char[] bwtOfText;
     private final char[] characters;
+    int[] sampledIndex;
     int[] suffixes;
 
     FMIndex(String Text) {
@@ -39,7 +37,18 @@ public class FMIndex {
 
         ArrayList<HashMap<Character, Integer>> preRankInitial = new ArrayList<>();
 
-        this.suffixes = suffixes;
+        HashMap<Integer, Integer> sampledSuffix = new HashMap<>();
+
+        for (int i=0; i< suffixes.length; i++) {
+            if (suffixes[i]%64==0) sampledSuffix.put(i, suffixes[i]);
+        }
+
+        Distance distance = new Distance(sampledSuffix);
+
+        this.sampledIndex = distance.getKeyArray();
+        this.suffixes = distance.getValueArray();
+
+        distance = null;
 
         HashMap<Character, Integer> toBeC;
 
@@ -133,7 +142,7 @@ public class FMIndex {
 
         }
 
-        computedC.replace('$', computedC.get('$'), 0);
+        computedC.replace(Character.MIN_VALUE, computedC.get(Character.MIN_VALUE), 0);
 
         return computedC;
 
@@ -233,7 +242,7 @@ public class FMIndex {
 
         }
 
-        return ' ';
+        return Character.MIN_VALUE;
 
     }
 
@@ -246,9 +255,16 @@ public class FMIndex {
         int first = range[0], last = range[1];
         int[] result = new int[last - first + 1];
 
+        List<Integer> integerList = Arrays.stream(this.C).boxed().collect(Collectors.toList());
+        List<Character> characterList = new ArrayList<>();
+        for (char c : this.characters) {
+            characterList.add(c);
+        }
+
         int firstIndex = first-1;
         for(int i=0; i<result.length; i++) {
-            result[i] = this.suffixes[firstIndex];
+            result[i] = getPosition(integerList, characterList, firstIndex);
+            //result[i] = this.suffixes[firstIndex];
             firstIndex++;
         }
 
@@ -268,6 +284,28 @@ public class FMIndex {
             t += (t < pidx) ? 1 : 0;
         }
         C = null;
+    }
+
+    private int LF(List<Integer> integerList, List<Character> characterList, int q) {
+
+        return integerList.get(characterList.indexOf(this.bwtOfText[q])) + rank(this.bwtOfText[q], this.bwtOfText, q);
+
+    }
+
+    private int getPosition(List<Integer> integerList, List<Character> characterList, int i) {
+
+        int j = i, t = 0;
+
+        List<Integer> integersKeys = Arrays.stream(this.sampledIndex).boxed().collect(Collectors.toList());
+        HashSet<Integer> integerHashSet = new HashSet<>(integersKeys);
+
+        while (!integerHashSet.contains(j)) {
+            j = LF(integerList, characterList, j);
+            t += 1;
+        }
+
+        return this.suffixes[integersKeys.indexOf(j)] + t;
+
     }
 
     public char[] getBwtOfText() {
