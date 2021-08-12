@@ -126,6 +126,7 @@ public class RLFMIndex {
         Scanner scanner = new Scanner(System.in);
 
         while (true) {
+            System.out.println("Enter -1 to exit or an index of the results array to make sure that the result at this index is correct.");
             int current = scanner.nextInt();
             //Enter -1 to end the program
             if(current==-1) break;
