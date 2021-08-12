@@ -77,7 +77,7 @@ public class FMIndex {
 
         occArray = null;
 
-        Character[] charactersCharacter = toBeC.keySet().toArray(Character[]::new);
+        Character[] charactersCharacter = toBeC.keySet().toArray(new Character[0]);
         this.characters = new char[charactersCharacter.length];
         for (int i=0; i<this.characters.length; i++) {
             this.characters[i] = charactersCharacter[i];
@@ -119,7 +119,7 @@ public class FMIndex {
             }
         }
 
-        Character[] characters = preC.keySet().toArray(Character[]::new);
+        Character[] characters = preC.keySet().toArray(new Character[0]);
         Arrays.sort(characters);
 
         HashMap<Character, Integer> computedC = new HashMap<>();

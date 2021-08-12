@@ -7,7 +7,7 @@ public class Rank {
     private final int[][] rankInitial;
 
     public Rank(ArrayList<HashMap<Character, Integer>> ranks) {
-        Character[] chars = ranks.get(0).keySet().toArray(Character[]::new);
+        Character[] chars = ranks.get(0).keySet().toArray(new Character[0]);
         Arrays.sort(chars);
         this.rankInitial = new int[ranks.size()][chars.length];
         for (int i=0; i < this.rankInitial.length; i++) {

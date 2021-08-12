@@ -8,8 +8,8 @@ public class Distance {
 
     public Distance(HashMap<Integer, Integer> hashMap) {
 
-        Integer[] key = hashMap.keySet().toArray(Integer[]::new);
-        Integer[] value = hashMap.values().toArray(Integer[]::new);
+        Integer[] key = hashMap.keySet().toArray(new Integer[0]);
+        Integer[] value = hashMap.values().toArray(new Integer[0]);
 
         this.keyArray = Arrays.stream(key).mapToInt(Integer::intValue).toArray();
         this.valueArray = Arrays.stream(value).mapToInt(Integer::intValue).toArray();

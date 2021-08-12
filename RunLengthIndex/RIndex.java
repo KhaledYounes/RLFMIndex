@@ -75,7 +75,7 @@ public class RIndex {
             }
         }
 
-        this.preData = Arrays.stream(prePreData.toArray(Integer[]::new)).mapToInt(Integer::intValue).toArray();
+        this.preData = Arrays.stream(prePreData.toArray(new Integer[0])).mapToInt(Integer::intValue).toArray();
 
         prePreData = null;
 
@@ -85,7 +85,7 @@ public class RIndex {
             characters.add(tuple.x);
         }
 
-        Character[] charactersPrime = characters.toArray(Character[]::new);
+        Character[] charactersPrime = characters.toArray(new Character[0]);
         sPrime = new char[charactersPrime.length];
         for(int i=0; i<sPrime.length; i++) {
             sPrime[i] = (char) charactersPrime[i];
@@ -133,7 +133,7 @@ public class RIndex {
             }
         }
 
-        L = Arrays.stream(toBeL.toArray(Integer[]::new)).mapToInt(Integer::intValue).toArray();
+        L = Arrays.stream(toBeL.toArray(new Integer[0])).mapToInt(Integer::intValue).toArray();
 
         toBeL = null;
 
@@ -143,7 +143,7 @@ public class RIndex {
             indexes.add(tuple.y);
         }
 
-        R = Arrays.stream(indexes.toArray(Integer[]::new)).mapToInt(Integer::intValue).toArray();
+        R = Arrays.stream(indexes.toArray(new Integer[0])).mapToInt(Integer::intValue).toArray();
 
         indexes = null;
 
@@ -156,7 +156,7 @@ public class RIndex {
 
         toBeC = FMIndex.computeC(sPrime, occArrayOfSPrime);
 
-        Character[] charactersCharacter = preRunLengthIndex.stream().map(x -> x.x).collect(Collectors.toSet()).toArray(Character[]::new);
+        Character[] charactersCharacter = preRunLengthIndex.stream().map(x -> x.x).collect(Collectors.toSet()).toArray(new Character[0]);
         this.characters = new char[charactersCharacter.length];
         for (int i=0; i<this.characters.length; i++) {
             this.characters[i] = charactersCharacter[i];
