@@ -1,3 +1,4 @@
+import org.openjdk.jol.info.GraphLayout;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -39,111 +40,99 @@ public class RLFMIndex {
         return contentBuilder.toString();
     }
 
-
     public static void main(String[] args) {
 
-        /*
+        GraphLayout.parseInstance((Object) new int[]{1, 2, 3}).totalSize();
 
-        char[] options = {'A', 'C', 'G', 'T'};
-        char[] result =  new char[100000];
-        Random r = new Random();
-        //result[0] = '$';
-        for(int i=0;i<result.length;i++){
-            //result[i]= 'A';
-            //if(i%100000==0) result[i]='C';
-            result[i]=options[r.nextInt(options.length)];
+        String data = "";
+        char[] pattern = "".toCharArray();
+
+        System.out.println();
+
+
+        if (args.length==1) {
+            data = getReadFile(args[0]);
         }
-
-        StringBuilder string = new StringBuilder(new String(result));
-
-        String toBeAdded = string.toString();
-
-        string.append(toBeAdded.repeat(9));
-
-        String input = '$' + string.toString();
-
-         */
-
-        String data = getReadFile("C:\\Users\\Admin\\Downloads\\dna\\dna");
-
-        //data = data.replace("\n", "");
-
-        data = data.substring(0, 10000000);
+        else if (args.length==2) {
+            data = getReadFile(args[0]);
+            pattern = args[1].toCharArray();
+        } else if (args.length==3) {
+            data = getReadFile(args[0]);
+            pattern = args[1].toCharArray();
+            data = data.substring(0, Integer.parseInt(args[2]));
+        } else {
+            System.out.println("args[0] -> Enter the path of the file to be indexed.");
+            System.out.println("args[1] -> (Optional) Enter a pattern to search for.");
+            System.out.println("args[2] -> (Optional) Enter up to which character you want index.");
+            System.exit(0);
+        }
 
         data = Character.MIN_VALUE + data;
 
-        /*
-        System.out.println("Length of the file is: " + data.length());
+        System.out.println();
 
-        char[] T = data.toCharArray();
-        int n = T.length;
-        char[] bwt = new char[n];
-        char[] V = new char[n];
-        int[] occArray = new int[n];
+        System.out.println(".................................................");
 
-        int pidx = sais.bwtransform(T, bwt, occArray, n);
+        System.out.println();
 
-        int m = T.length;
-        int[] suffixes = new int[m];
-
-        sais.suffixsort(T, suffixes, m);
-        suffixes[0] = m;
-
-        unbwt(bwt, V, occArray, n, pidx);
-
-        for (int i=0; i<occArray.length; i++)
-            occArray[i] += 1;
-
-
-        int runLength = 1;
-        for (int i=1; i< bwt.length; i++) {
-            if(bwt[i]!=bwt[i-1]) {
-                runLength++;
-            }
-        }
-
-        System.out.println("Run length of the bwt of the file is: " + runLength);
-
-         */
-
-        //char[] result = new char[10000001];
-        //result[0] = '$';
-        //System.arraycopy(data.toCharArray(), 0, result, 1, result.length-1);
-
-        //data = null;
-
-        //System.out.println("________________");
+        long startTime = System.currentTimeMillis();
 
         FMIndex fmIndex = new FMIndex(data);
-        System.out.println("Done with constructing the FM index");
 
-        //System.out.println("FM index needed: "+ /1024/1024 + " megabytes");
+        long endTime = System.currentTimeMillis();
 
-        char[] pattern = new char[]{'A', 'A', 'G', 'T', 'T', 'A', 'A', 'C', 'C', 'A'};
-        //char[] pattern = "<title>Java Language Home Page</title>".toCharArray();
-        //System.out.println(Arrays.toString(fmIndex.getRange(pattern)));
+        System.out.println("Done with constructing the FM index. That took " + (endTime - startTime)/1000 + " seconds.");
+
+        System.out.println("The size of the FM index is: " +  GraphLayout.parseInstance(fmIndex).totalSize()/1024/1024 + " megabytes.");
+
+        startTime = System.currentTimeMillis();
+
         System.out.println(Arrays.toString(fmIndex.locate(pattern)));
 
-        //System.out.println("_________________");
+        endTime = System.currentTimeMillis();
+
+        System.out.println("Time token by the query with FM index equals: " + (endTime - startTime)/1000 + " seconds.");
+
+        System.out.println();
+
+        System.out.println(".................................................");
+
+        System.out.println();
+
+        startTime = System.currentTimeMillis();
 
         RIndex rIndex = new RIndex(data);
-        System.out.println("Done with constructing the run length index");
 
-        //System.out.println("R index needed: "+ /1024/1024 + " megabytes");
+        endTime = System.currentTimeMillis();
 
-        //System.out.println(Arrays.toString(rIndex.getRangeWithRIndex(pattern)));
+        System.out.println("Done with constructing the run length index. That took " + (endTime - startTime)/1000 + " seconds.");
+
+        System.out.println("The size of the r index is: " +  GraphLayout.parseInstance(rIndex).totalSize()/1024/1024 + " megabytes.");
+
+        startTime = System.currentTimeMillis();
+
         System.out.println(Arrays.toString(rIndex.locate(pattern)));
+
+        endTime = System.currentTimeMillis();
+
+        System.out.println("Time token by the query with r index equals: " + (endTime - startTime)/1000 + " seconds.");
+
+        System.out.println();
+
+        System.out.println(".................................................");
+
+        System.out.println();
 
         Scanner scanner = new Scanner(System.in);
 
         while (true) {
             int current = scanner.nextInt();
+            //Enter -1 to end the program
             if(current==-1) break;
             else {
                 char[] extract = new char[pattern.length];
                 System.arraycopy(data.toCharArray(), current, extract, 0, extract.length);
                 System.out.println(Arrays.toString(extract));
-                //System.out.println("Enter -1 to end the program");
             }
         }
 
