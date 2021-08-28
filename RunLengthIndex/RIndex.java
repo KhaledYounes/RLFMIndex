@@ -87,7 +87,7 @@ public class RIndex {
             this.sPrime[i] = (char) preRunLengthIndex.get(i).x;
         }
 
-        Collections.sort(preRunLengthIndex, Comparator.comparing(o -> o.x));
+        preRunLengthIndex.sort(Comparator.comparing(o -> o.x));
 
         for(int i=1; i<preRunLengthIndex.size(); i++) {
             if (preRunLengthIndex.get(i).x==preRunLengthIndex.get(i-1).x) {
@@ -109,13 +109,9 @@ public class RIndex {
         }
         toCalculateL.get(toCalculateL.size()-1).y = sizeOfText - 1;
 
-        Collections.sort(toCalculateL, Comparator.comparing(o -> o.x));
+        toCalculateL.sort(Comparator.comparing(o -> o.x));
 
-        List<Integer> toBeL = toCalculateL.stream().map(x -> suffixes[x.y]).collect(Collectors.toList());
-
-        L = Arrays.stream(toBeL.toArray(new Integer[0])).mapToInt(Integer::intValue).toArray();
-
-
+        L = Arrays.stream(toCalculateL.stream().map(x -> suffixes[x.y]).toArray(Integer[]::new)).mapToInt(Integer::intValue).toArray();
 
         int[] occArrayOfSPrime = new int[this.sPrime.length];
 
@@ -298,7 +294,7 @@ public class RIndex {
 
         int indexInCharacters = Arrays.binarySearch(this.characters, c);
 
-        if (indexInCharacters < 0 || q<=0) return 0;
+        if (indexInCharacters < 0 || q <= 0) return 0;
 
         q--;
 
