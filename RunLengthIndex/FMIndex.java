@@ -35,28 +35,37 @@ public class FMIndex {
         V = null;
         T = null;
 
-        ArrayList<HashMap<Character, Integer>> preRankInitial = new ArrayList<>();
-
-        HashMap<Integer, Integer> sampledSuffix = new HashMap<>();
+        ArrayList<Integer> suffixKeys = new ArrayList<>();
+        ArrayList<Integer> suffixValues = new ArrayList<>();
 
         for (int i=0; i< suffixes.length; i++) {
-            if (suffixes[i]%64==0) sampledSuffix.put(i, suffixes[i]);
+            if (suffixes[i]%64==0)  {
+                suffixKeys.add(i);
+                suffixValues.add(suffixes[i]);
+            }
         }
 
-        Distance distance = new Distance(sampledSuffix);
+        int[] suffixKeysArray = new int[suffixKeys.size()];
+        int[] suffixValuesArray = new int [suffixKeys.size()];
 
-        this.sampledIndex = distance.getKeyArray();
-        this.suffixes = distance.getValueArray();
+        for (int i=0; i<suffixKeys.size(); i++) {
+            suffixKeysArray[i] = suffixKeys.get(i);
+            suffixValuesArray[i] = suffixValues.get(i);
+        }
 
-        distance = null;
+        this.sampledIndex = suffixKeysArray;
+        this.suffixes = suffixValuesArray;
 
         HashMap<Character, Integer> toBeC;
 
-        toBeC = computeC(bwt, occArray);
+        toBeC = computeC(bwt);
 
+        ArrayList<HashMap<Character, Integer>> preRankInitial = new ArrayList<>();
 
         for (int i=0; i<bwt.length; i+=64) {
+
             HashMap<Character, Integer> hashMap = new HashMap<>();
+
             for (char c : toBeC.keySet()) {
 
                 int k = i;
@@ -71,11 +80,12 @@ public class FMIndex {
                 } else {
                     hashMap.put(c, occArray[k]);
                 }
-            }
-            preRankInitial.add(hashMap);
-        }
 
-        occArray = null;
+            }
+
+            preRankInitial.add(hashMap);
+
+        }
 
         Character[] charactersCharacter = toBeC.keySet().toArray(new Character[0]);
         this.characters = new char[charactersCharacter.length];
@@ -83,19 +93,16 @@ public class FMIndex {
             this.characters[i] = charactersCharacter[i];
         }
 
-        charactersCharacter = null;
-
         Arrays.sort(this.characters);
 
         this.bwtOfText = bwt;
 
-        Rank rank = new Rank(preRankInitial);
-
-        preRankInitial = null;
-
-        this.rankInitial = rank.getRankInitial();
-
-        rank = null;
+        this.rankInitial = new int[preRankInitial.size()][this.characters.length];
+        for (int i=0; i < this.rankInitial.length; i++) {
+            for(int j=0; j < this.characters.length; j++) {
+                this.rankInitial[i][j] = preRankInitial.get(i).get(this.characters[j]);
+            }
+        }
 
         this.C = new int[this.characters.length];
 
@@ -103,11 +110,9 @@ public class FMIndex {
             this.C[i] = toBeC.get(this.characters[i]);
         }
 
-        toBeC = null;
-
     }
 
-    public static HashMap<Character, Integer> computeC (char[] bwt, int[] occ) {
+    public static HashMap<Character, Integer> computeC (char[] bwt) {
 
         HashMap<Character, Integer> preC = new HashMap<>();
 
@@ -115,7 +120,7 @@ public class FMIndex {
             if (!preC.containsKey(c)) {
                 preC.put(c, 1);
             } else {
-                preC.replace(c, preC.get(c), preC.get(c)+1);
+                preC.replace(c, preC.get(c)+1);
             }
         }
 
@@ -124,25 +129,12 @@ public class FMIndex {
 
         HashMap<Character, Integer> computedC = new HashMap<>();
 
-        for (char c : characters) {
-            computedC.put(c, preC.get(c));
-        }
+        computedC.put(characters[0], 0);
+        for (int i = 1; i < preC.size(); i++) {
 
-        for (int i=computedC.size()-1; i>0; i--) {
-
-            int k = i;
-            int newValue = 0;
-
-            while (k>0) {
-                newValue += computedC.get(characters[k-1]);
-                k--;
-            }
-
-            computedC.replace(characters[i], computedC.get(characters[i]), newValue);
+            computedC.put(characters[i], computedC.get(characters[i-1]) + preC.get(characters[i-1]));
 
         }
-
-        computedC.replace(Character.MIN_VALUE, computedC.get(Character.MIN_VALUE), 0);
 
         return computedC;
 
@@ -150,20 +142,19 @@ public class FMIndex {
 
     public int rank(char c, char[] bwt, int q){
 
-        List<Character> characterList = new ArrayList<>();
-        for (char character : this.characters) characterList.add(character);
+        int indexInCharacters = Arrays.binarySearch(this.characters, c);
 
-        if (!characterList.contains(c) || q<=0) return 0;
+        if (indexInCharacters < 0 || q<=0) return 0;
 
         q--;
 
         int index = q/64;
 
         if (q % 64 == 0) {
-            return rankInitial[index][characterList.indexOf(c)];
+            return rankInitial[index][indexInCharacters];
         } else {
 
-            int preValue = rankInitial[index][characterList.indexOf(c)];
+            int preValue = rankInitial[index][indexInCharacters];
             int toAdd = 0;
 
             for (int i = (64*index)+1; i<=q; i++) {
@@ -178,37 +169,27 @@ public class FMIndex {
 
         if (P.length==0) return new int[]{};
 
-        List<Integer> integerList = Arrays.stream(this.C).boxed().collect(Collectors.toList());
-        List<Character> characterList = new ArrayList<>();
-        for (char c : this.characters) {
-            characterList.add(c);
-        }
-
         for (char l : P) {
-            if(!characterList.contains(l)) return new int[]{};
+            if(Arrays.binarySearch(this.characters, l) < 0) return new int[]{};
         }
 
         int i = P.length-1;
         char c = P[i], nc = nextGreatestAlphabet(this.characters, c);
 
 
-        int first = integerList.get(characterList.indexOf(c))+1;
-        int last = integerList.get(characterList.indexOf(nc));
+        int first = this.C[Arrays.binarySearch(this.characters, c)] + 1;
+        int last = this.C[Arrays.binarySearch(this.characters, nc)];
 
 
         if(c==nc) {
             last = bwtOfText.length;
         }
 
-        //System.out.println(Arrays.toString(new int[]{first, last}));
-
         while (first<=last && i>0) {
             c = P[i-1];
 
-            first = integerList.get(characterList.indexOf(c)) + rank(c, this.bwtOfText, first-1) + 1;
-            last = integerList.get(characterList.indexOf(c)) + rank(c, this.bwtOfText, last);
-
-            //System.out.println(Arrays.toString(new int[]{first, last}));
+            first = this.C[Arrays.binarySearch(this.characters, c)] + rank(c, this.bwtOfText, first-1) + 1;
+            last = this.C[Arrays.binarySearch(this.characters, c)] + rank(c, this.bwtOfText, last);
 
             i--;
         }
@@ -255,16 +236,9 @@ public class FMIndex {
         int first = range[0], last = range[1];
         int[] result = new int[last - first + 1];
 
-        List<Integer> integerList = Arrays.stream(this.C).boxed().collect(Collectors.toList());
-        List<Character> characterList = new ArrayList<>();
-        for (char c : this.characters) {
-            characterList.add(c);
-        }
-
         int firstIndex = first-1;
         for(int i=0; i<result.length; i++) {
-            result[i] = getPosition(integerList, characterList, firstIndex);
-            //result[i] = this.suffixes[firstIndex];
+            result[i] = getPosition(firstIndex);
             firstIndex++;
         }
 
@@ -286,25 +260,24 @@ public class FMIndex {
         C = null;
     }
 
-    private int LF(List<Integer> integerList, List<Character> characterList, int q) {
+    private int LF(int q) {
 
-        return integerList.get(characterList.indexOf(this.bwtOfText[q])) + rank(this.bwtOfText[q], this.bwtOfText, q);
+        return this.C[Arrays.binarySearch(this.characters, this.bwtOfText[q])] + rank(this.bwtOfText[q], this.bwtOfText, q);
 
     }
 
-    private int getPosition(List<Integer> integerList, List<Character> characterList, int i) {
+    private int getPosition(int i) {
 
         int j = i, t = 0;
 
-        List<Integer> integersKeys = Arrays.stream(this.sampledIndex).boxed().collect(Collectors.toList());
-        HashSet<Integer> integerHashSet = new HashSet<>(integersKeys);
-
-        while (!integerHashSet.contains(j)) {
-            j = LF(integerList, characterList, j);
+        int indexInKeys = Arrays.binarySearch(this.sampledIndex, j);
+        while (indexInKeys < 0) {
+            j = LF(j);
+            indexInKeys = Arrays.binarySearch(this.sampledIndex, j);
             t += 1;
         }
 
-        return this.suffixes[integersKeys.indexOf(j)] + t;
+        return this.suffixes[indexInKeys] + t;
 
     }
 

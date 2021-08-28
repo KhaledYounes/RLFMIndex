@@ -49,7 +49,6 @@ public class RLFMIndex {
 
         System.out.println();
 
-
         if (args.length==1) {
             data = getReadFile(args[0]);
         }
