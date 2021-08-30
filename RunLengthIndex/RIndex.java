@@ -19,6 +19,9 @@ public class RIndex {
 
     public RIndex (String Text) {
 
+        long s, e;
+        s = System.currentTimeMillis();
+
         char[] T = Text.toCharArray();
         int n = T.length;
         char[] bwt = new char[n];
@@ -46,6 +49,10 @@ public class RIndex {
         V = null;
         T = null;
 
+        e = System.currentTimeMillis();
+        System.out.println("Step 1 took: " + (e-s)/1000 + " seconds");
+        s = System.currentTimeMillis();
+
         HashMap<Character, Integer> toBeBwtC;
 
         toBeBwtC =  FMIndex.computeC(bwt);
@@ -63,6 +70,10 @@ public class RIndex {
         preRunLengthIndex.add(new Tuple<>(bwt[0], 0));
         toCalculateL.add(new Tuple<>(bwt[0], 0));
         prePreData.add(1);
+
+        e = System.currentTimeMillis();
+        System.out.println("Step 2 took: " + (e-s)/1000 + " seconds");
+        s = System.currentTimeMillis();
 
         for (int i=1; i<sizeOfText; i++) {
             if(bwt[i]!=bwt[i-1]) {
@@ -87,6 +98,10 @@ public class RIndex {
             this.sPrime[i] = (char) preRunLengthIndex.get(i).x;
         }
 
+        e = System.currentTimeMillis();
+        System.out.println("Step 3 took: " + (e-s)/1000 + " seconds");
+        s = System.currentTimeMillis();
+
         preRunLengthIndex.sort(Comparator.comparing(o -> o.x));
 
         for(int i=1; i<preRunLengthIndex.size(); i++) {
@@ -103,6 +118,9 @@ public class RIndex {
 
         R = Arrays.stream(indexes.toArray(new Integer[0])).mapToInt(Integer::intValue).toArray();
 
+        e = System.currentTimeMillis();
+        System.out.println("Step 4 took: " + (e-s)/1000 + " seconds");
+        s = System.currentTimeMillis();
 
         for(int i=0; i<toCalculateL.size()-1; i++) {
             toCalculateL.get(i).y = toCalculateL.get(i+1).y - 1;
@@ -112,6 +130,10 @@ public class RIndex {
         toCalculateL.sort(Comparator.comparing(o -> o.x));
 
         L = Arrays.stream(toCalculateL.stream().map(x -> suffixes[x.y]).toArray(Integer[]::new)).mapToInt(Integer::intValue).toArray();
+
+        e = System.currentTimeMillis();
+        System.out.println("Step 5 took: " + (e-s)/1000 + " seconds");
+        s = System.currentTimeMillis();
 
         int[] occArrayOfSPrime = new int[this.sPrime.length];
 
@@ -136,6 +158,10 @@ public class RIndex {
         }
 
         Arrays.sort(this.characters);
+
+        e = System.currentTimeMillis();
+        System.out.println("Step 6 took: " + (e-s)/1000 + " seconds");
+        s = System.currentTimeMillis();
 
         for (int i=0; i<this.sPrime.length; i+=64) {
 
@@ -174,6 +200,9 @@ public class RIndex {
         this.keyDistance = distancesKeysArray;
         this.valueDistance = distancesValuesArray;
 
+        e = System.currentTimeMillis();
+        System.out.println("Step 7 took: " + (e-s)/1000 + " seconds");
+        s = System.currentTimeMillis();
 
         this.rankInitial = new int[preRankInitial.size()][this.characters.length];
         for (int i=0; i < this.rankInitial.length; i++) {
@@ -191,6 +220,9 @@ public class RIndex {
         for(int i=0; i<toBeC.size(); i++) {
             this.C[i] = toBeC.get(this.characters[i]);
         }
+
+        e = System.currentTimeMillis();
+        System.out.println("Step 8 took: " + (e-s)/1000 + " seconds");
 
     }
 
