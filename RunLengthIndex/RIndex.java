@@ -63,7 +63,7 @@ public class RIndex {
 
         ArrayList<Integer> prePreData = new ArrayList<>();
 
-        TreeMap<Integer, Integer> distancesTree = new TreeMap<>();
+        ArrayList<Tuple<Integer, Integer>> distances = new ArrayList<>();
 
         ArrayList<HashMap<Character, Integer>> preRankInitial = new ArrayList<>();
 
@@ -79,7 +79,7 @@ public class RIndex {
             if(bwt[i]!=bwt[i-1]) {
                 preRunLengthIndex.add(new Tuple<>(bwt[i], i));
                 toCalculateL.add(new Tuple<>(bwt[i], i));
-                distancesTree.put(suffixes[i], suffixes[i-1]-suffixes[i]);
+                distances.add(new Tuple<>(suffixes[i], suffixes[i-1]-suffixes[i]));
                 prePreData.add(i+1);
             }
         }
@@ -151,7 +151,7 @@ public class RIndex {
 
         toBeC = FMIndex.computeC(sPrime);
 
-        Character[] charactersCharacter = preRunLengthIndex.stream().map(x -> x.x).collect(Collectors.toSet()).toArray(new Character[0]);
+        Character[] charactersCharacter = preRunLengthIndex.stream().map(x -> x.x).distinct().toArray(Character[]::new);
         this.characters = new char[charactersCharacter.length];
         for (int i=0; i<this.characters.length; i++) {
             this.characters[i] = charactersCharacter[i];
@@ -185,17 +185,16 @@ public class RIndex {
             preRankInitial.add(hashMap);
         }
 
-        int[] distancesKeysArray = new int[distancesTree.size()];
-        int[] distancesValuesArray = new int[distancesTree.size()];
+        distances.sort(Comparator.comparing(o -> o.x));
+
+        int[] distancesKeysArray = new int[distances.size()];
+        int[] distancesValuesArray = new int[distances.size()];
 
 
-        int entryIndex = 0;
-        for(Map.Entry<Integer, Integer> entries : distancesTree.entrySet()) {
-            distancesKeysArray[entryIndex] = entries.getKey();
-            distancesValuesArray[entryIndex] = entries.getValue();
-            entryIndex++;
+        for(int i=0; i< distances.size(); i++) {
+            distancesKeysArray[i] = distances.get(i).x;
+            distancesValuesArray[i] = distances.get(i).y;
         }
-
 
         this.keyDistance = distancesKeysArray;
         this.valueDistance = distancesValuesArray;
@@ -276,7 +275,7 @@ public class RIndex {
         if(this.sPrime[k-1]==c) {
             currentSuffix = currentSuffix - 1;
         } else {
-            int p = rankWithR(c, this.sPrime,k-1);
+            int p = rankWithR(c,k-1);
             int index = this.C[Arrays.binarySearch(this.characters, c)] + p - 1;
             currentSuffix = this.L[ index < this.L.length ? index : index-1] - 1;
         }
@@ -289,7 +288,7 @@ public class RIndex {
 
         char cPrime = this.sPrime[k-1];
 
-        int p = rankWithR(c, this.sPrime, k-1);
+        int p = rankWithR(c, k-1);
 
         if(p==0) {
             if(c==cPrime) return q - j + 1;
@@ -322,7 +321,7 @@ public class RIndex {
 
     }
 
-    public int rankWithR(char c, char[] sPrime, int q){
+    public int rankWithR(char c, int q){
 
         int indexInCharacters = Arrays.binarySearch(this.characters, c);
 

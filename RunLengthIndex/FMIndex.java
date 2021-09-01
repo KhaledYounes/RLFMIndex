@@ -38,12 +38,21 @@ public class FMIndex {
         ArrayList<Integer> suffixKeys = new ArrayList<>();
         ArrayList<Integer> suffixValues = new ArrayList<>();
 
-        for (int i=0; i< suffixes.length; i++) {
-            if (suffixes[i]%64==0)  {
+
+        if (suffixes.length < 64) {
+            for (int i=0; i< suffixes.length; i++) {
                 suffixKeys.add(i);
                 suffixValues.add(suffixes[i]);
             }
+        } else {
+            for (int i=0; i< suffixes.length; i++) {
+                if (suffixes[i]%64==0)  {
+                    suffixKeys.add(i);
+                    suffixValues.add(suffixes[i]);
+                }
+            }
         }
+
 
         int[] suffixKeysArray = new int[suffixKeys.size()];
         int[] suffixValuesArray = new int [suffixKeys.size()];
