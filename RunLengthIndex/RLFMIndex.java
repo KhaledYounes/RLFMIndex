@@ -44,6 +44,7 @@ public class RLFMIndex {
 
         GraphLayout.parseInstance((Object) new int[]{1, 2, 3}).totalSize();
 
+
         String data = "";
         char[] pattern = "".toCharArray();
 
@@ -65,6 +66,7 @@ public class RLFMIndex {
             System.out.println("args[2] -> (Optional) Enter up to which character you want index.");
             System.exit(0);
         }
+
 
         data = Character.MIN_VALUE + data;
 
@@ -90,7 +92,7 @@ public class RLFMIndex {
 
         endTime = System.currentTimeMillis();
 
-        System.out.println("Time token by the query with FM index equals: " + (endTime - startTime)/1000 + " seconds.");
+        System.out.println("Time taken by the query with FM index equals: " + (endTime - startTime) + " milliseconds.");
 
         System.out.println();
 
@@ -114,7 +116,7 @@ public class RLFMIndex {
 
         endTime = System.currentTimeMillis();
 
-        System.out.println("Time token by the query with r index equals: " + (endTime - startTime)/1000 + " seconds.");
+        System.out.println("Time taken by the query with r index equals: " + (endTime - startTime) + " milliseconds.");
 
         System.out.println();
 
