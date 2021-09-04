@@ -84,7 +84,7 @@ public class RLFMIndex {
 
         System.out.println("The size of the FM index is: " +  GraphLayout.parseInstance(fmIndex).totalSize()/1024/1024 + " megabytes.");
 
-        System.out.println("Size (Bits per symbol) of the FM index is: " + GraphLayout.parseInstance(fmIndex).totalSize()/data.length());
+        System.out.println("Size (Bits per symbol) of the FM index is: " + (double) GraphLayout.parseInstance(fmIndex).totalSize()/data.length());
 
         startTime = System.currentTimeMillis();
 
@@ -95,7 +95,7 @@ public class RLFMIndex {
         endTime = System.currentTimeMillis();
 
         if (fmLocate.length != 0) {
-            System.out.println("Time taken by the query with FM index equals: " + (endTime - startTime) / fmLocate.length + " milliseconds per occurrence.");
+            System.out.println("Time taken by the query with FM index equals: " + (double) (endTime - startTime) / fmLocate.length + " milliseconds per occurrence.");
         }
 
         System.out.println();
@@ -114,7 +114,7 @@ public class RLFMIndex {
 
         System.out.println("The size of the r index is: " +  GraphLayout.parseInstance(rIndex).totalSize()/1024/1024 + " megabytes.");
 
-        System.out.println("Size (Bits per symbol) of the r index is: " + GraphLayout.parseInstance(rIndex).totalSize()/data.length());
+        System.out.println("Size (Bits per symbol) of the r index is: " + (double) GraphLayout.parseInstance(rIndex).totalSize()/data.length());
 
         startTime = System.currentTimeMillis();
 
@@ -125,7 +125,7 @@ public class RLFMIndex {
         endTime = System.currentTimeMillis();
 
         if (rLocate.length != 0) {
-            System.out.println("Time taken by the query with r index equals: " + (endTime - startTime) / rLocate.length + " milliseconds per occurrence.");
+            System.out.println("Time taken by the query with r index equals: " + (double) (endTime - startTime) / rLocate.length + " milliseconds per occurrence.");
         }
 
         System.out.println();
