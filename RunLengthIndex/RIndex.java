@@ -77,7 +77,6 @@ public class RIndex {
         Thread t3 = new ForInParallel.ToBeL(toCalculateL, bwt); t3.start();
         Thread t4 = new ForInParallel.Distances(distances, bwt, suffixes); t4.start();
 
-
         try {
 
             t1.join();

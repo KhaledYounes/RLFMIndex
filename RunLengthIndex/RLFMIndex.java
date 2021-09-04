@@ -94,7 +94,9 @@ public class RLFMIndex {
 
         endTime = System.currentTimeMillis();
 
-        System.out.println("Time taken by the query with FM index equals: " + (endTime - startTime) / fmLocate.length + " milliseconds per occurrence.");
+        if (fmLocate.length != 0) {
+            System.out.println("Time taken by the query with FM index equals: " + (endTime - startTime) / fmLocate.length + " milliseconds per occurrence.");
+        }
 
         System.out.println();
 
@@ -122,7 +124,9 @@ public class RLFMIndex {
 
         endTime = System.currentTimeMillis();
 
-        System.out.println("Time taken by the query with r index equals: " + (endTime - startTime) / rLocate.length + " milliseconds per occurrence.");
+        if (rLocate.length != 0) {
+            System.out.println("Time taken by the query with r index equals: " + (endTime - startTime) / rLocate.length + " milliseconds per occurrence.");
+        }
 
         System.out.println();
 
