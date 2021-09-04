@@ -1,5 +1,4 @@
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class RIndex {
 
@@ -71,33 +70,12 @@ public class RIndex {
         toCalculateL.add(new Tuple<>(bwt[0], 0));
         prePreData.add(1);
 
-        e = System.currentTimeMillis();
-        System.out.println("Step 2 took: " + (e-s)/1000 + " seconds");
-        s = System.currentTimeMillis();
 
+        Thread t1 = new ForInParallel.PreData(prePreData, bwt); t1.start();
+        Thread t2 = new ForInParallel.PreRuns(preRunLengthIndex, bwt); t2.start();
+        Thread t3 = new ForInParallel.ToBeL(toCalculateL, bwt); t3.start();
+        Thread t4 = new ForInParallel.Distances(distances, bwt, suffixes); t4.start();
 
-        /*
-
-        for (int i=1; i<sizeOfText; i++) {
-            if(bwt[i]!=bwt[i-1]) {
-                preRunLengthIndex.add(new Tuple<>(bwt[i], i));
-                toCalculateL.add(new Tuple<>(bwt[i], i));
-                distances.add(new Tuple<>(suffixes[i], suffixes[i-1]-suffixes[i]));
-                prePreData.add(i+1);
-            }
-        }
-
-         */
-
-        Thread t1 = new ForInParallel.PreData(prePreData, bwt);
-        Thread t2 = new ForInParallel.PreRuns(preRunLengthIndex, bwt);
-        Thread t3 = new ForInParallel.ToBeL(toCalculateL, bwt);
-        Thread t4 = new ForInParallel.Distances(distances, bwt, suffixes);
-
-        t1.start();
-        t2.start();
-        t3.start();
-        t4.start();
 
         try {
 
@@ -110,103 +88,69 @@ public class RIndex {
             exception.printStackTrace();
         }
 
+        SortInParallel t5 = new SortInParallel(null, distances); t5.start();
+
         this.sPrime = new char[preRunLengthIndex.size()];
 
         this.preData = new int[preRunLengthIndex.size()];
 
-        /*
-        for (int i=0; i<preRunLengthIndex.size()-1; i++) {
-            preRunLengthIndex.get(i).y = (preRunLengthIndex.get(i+1).y - preRunLengthIndex.get(i).y);
-            toCalculateL.get(i).y = toCalculateL.get(i+1).y - 1;
-            this.sPrime[i] = (char) preRunLengthIndex.get(i).x;
-            this.preData[i] = (int) prePreData.get(i);
-        }
 
-         */
+        Thread t6 = new ForInParallel.ModifyPreRuns(preRunLengthIndex); t6.start();
+        Thread t7 = new ForInParallel.ModifyL(toCalculateL); t7.start();
 
-        Thread t5 = new ForInParallel.ModifyPreRuns(preRunLengthIndex);
-        Thread t6 = new ForInParallel.ModifyL(toCalculateL);
-
-
-        t5.start();
-        t6.start();
 
         try {
 
-            t5.join();
             t6.join();
-
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
-
-        Thread t7 = new ForInParallel.SPrime(this.sPrime, preRunLengthIndex);
-        Thread t8 = new ForInParallel.PreDataArray(this.preData, prePreData);
-
-
-        t7.start();
-        t8.start();
-
-        try {
-
             t7.join();
-            t8.join();
 
         } catch (Exception exception) {
             exception.printStackTrace();
         }
-
 
         preRunLengthIndex.get(preRunLengthIndex.size()-1).y =
                 (sizeOfText) - preRunLengthIndex.get(preRunLengthIndex.size()-1).y;
 
         toCalculateL.get(toCalculateL.size()-1).y = sizeOfText - 1;
 
-        this.sPrime[this.sPrime.length-1] = (char) preRunLengthIndex.get(this.sPrime.length-1).x;
 
-        this.preData[this.preData.length-1] = prePreData.get(this.preData.length-1);
+        Thread t8 = new ForInParallel.SPrime(this.sPrime, preRunLengthIndex); t8.start();
+        Thread t9 = new ForInParallel.PreDataArray(this.preData, prePreData); t9.start();
 
-        e = System.currentTimeMillis();
-        System.out.println("Step 3 took: " + (e-s)/1000 + " seconds");
-        s = System.currentTimeMillis();
-
-        /*
-
-        // sorting without threads.
-
-        preRunLengthIndex.sort(Comparator.comparing(o -> o.x));
-
-
-        toCalculateL.sort(Comparator.comparing(o -> o.x));
-
-
-        List<Tuple<Integer, Integer>> sortedDistances = distances.parallelStream()
-                .sorted(Comparator.comparing(o -> o.x)).collect(Collectors.toList());
-
-         */
-
-        // sorting with threads.
-
-        SortInParallel t9 = new SortInParallel(preRunLengthIndex, null);
-        SortInParallel t10 = new SortInParallel(toCalculateL, null);
-        SortInParallel t11 = new SortInParallel(null, distances);
-
-        t9.start();
-        t10.start();
-        t11.start();
 
         try {
 
+            t8.join();
             t9.join();
-            t10.join();
-            t11.join();
 
         } catch (Exception exception) {
             exception.printStackTrace();
         }
 
 
-        List<Tuple<Integer, Integer>> sortedDistances = t11.getSorted();
+
+        SortInParallel t10 = new SortInParallel(preRunLengthIndex, null); t10.start();
+        SortInParallel t11 = new SortInParallel(toCalculateL, null); t11.start();
+
+
+        try {
+
+            t10.join();
+            t11.join();
+            t5.join();
+
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+
+
+        List<Tuple<Integer, Integer>> sortedDistances = t5.getSorted();
+
+
+        e = System.currentTimeMillis();
+        System.out.println("Step 2 took: " + (e-s)/1000 + " seconds");
+        s = System.currentTimeMillis();
+
 
 
         for(int i=1; i<preRunLengthIndex.size(); i++) {
@@ -221,16 +165,13 @@ public class RIndex {
                 .toArray(Integer[]::new)).mapToInt(Integer::intValue).toArray();
 
 
-        e = System.currentTimeMillis();
-        System.out.println("Step 4 took: " + (e-s)/1000 + " seconds");
-        s = System.currentTimeMillis();
-
 
         this.L = Arrays.stream(toCalculateL.stream().map(x -> suffixes[x.y])
                 .toArray(Integer[]::new)).mapToInt(Integer::intValue).toArray();
 
+
         e = System.currentTimeMillis();
-        System.out.println("Step 5 took: " + (e-s)/1000 + " seconds");
+        System.out.println("Step 3 took: " + (e-s)/1000 + " seconds");
         s = System.currentTimeMillis();
 
         int[] occArrayOfSPrime = new int[this.sPrime.length];
@@ -257,9 +198,6 @@ public class RIndex {
 
         Arrays.sort(this.characters);
 
-        e = System.currentTimeMillis();
-        System.out.println("Step 6 took: " + (e-s)/1000 + " seconds");
-        s = System.currentTimeMillis();
 
         for (int i=0; i<this.sPrime.length; i+=64) {
 
@@ -296,9 +234,6 @@ public class RIndex {
         this.keyDistance = distancesKeysArray;
         this.valueDistance = distancesValuesArray;
 
-        e = System.currentTimeMillis();
-        System.out.println("Step 7 took: " + (e-s)/1000 + " seconds");
-        s = System.currentTimeMillis();
 
         this.rankInitial = new int[preRankInitial.size()][this.characters.length];
         for (int i=0; i < this.rankInitial.length; i++) {
@@ -318,7 +253,7 @@ public class RIndex {
         }
 
         e = System.currentTimeMillis();
-        System.out.println("Step 8 took: " + (e-s)/1000 + " seconds");
+        System.out.println("Step 4 took: " + (e-s)/1000 + " seconds");
         System.out.println();
 
     }

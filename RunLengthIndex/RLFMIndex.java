@@ -44,7 +44,6 @@ public class RLFMIndex {
 
         GraphLayout.parseInstance((Object) new int[]{1, 2, 3}).totalSize();
 
-
         String data = "";
         char[] pattern = "".toCharArray();
 
@@ -66,7 +65,6 @@ public class RLFMIndex {
             System.out.println("args[2] -> (Optional) Enter up to which character you want index.");
             System.exit(0);
         }
-
 
         data = Character.MIN_VALUE + data;
 

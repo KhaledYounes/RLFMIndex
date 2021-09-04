@@ -153,7 +153,7 @@ public class ForInParallel {
         @Override
         public void run() {
 
-            for (int i=0; i<arrayList.size()-1; i++) {
+            for (int i=0; i<arrayList.size(); i++) {
                 this.array[i] = (char) arrayList.get(i).x;
             }
 
@@ -175,7 +175,7 @@ public class ForInParallel {
         @Override
         public void run() {
 
-            for (int i=0; i<arrayList.size()-1; i++) {
+            for (int i=0; i<arrayList.size(); i++) {
                 this.array[i] = (int) arrayList.get(i);
             }
 
