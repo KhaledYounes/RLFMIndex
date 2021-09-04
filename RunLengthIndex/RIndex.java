@@ -70,6 +70,7 @@ public class RIndex {
         toCalculateL.add(new Tuple<>(bwt[0], 0));
         prePreData.add(1);
 
+        System.out.println("Part 1");
 
         Thread t1 = new ForInParallel.PreData(prePreData, bwt); t1.start();
         Thread t2 = new ForInParallel.PreRuns(preRunLengthIndex, bwt); t2.start();
@@ -87,6 +88,8 @@ public class RIndex {
         } catch (Exception exception) {
             exception.printStackTrace();
         }
+
+        System.out.println("Part 2");
 
         SortInParallel t5 = new SortInParallel(null, distances); t5.start();
 
@@ -108,6 +111,8 @@ public class RIndex {
             exception.printStackTrace();
         }
 
+        System.out.println("Part 3");
+
         preRunLengthIndex.get(preRunLengthIndex.size()-1).y =
                 (sizeOfText) - preRunLengthIndex.get(preRunLengthIndex.size()-1).y;
 
@@ -127,7 +132,7 @@ public class RIndex {
             exception.printStackTrace();
         }
 
-
+        System.out.println("Part 4");
 
         SortInParallel t10 = new SortInParallel(preRunLengthIndex, null); t10.start();
         SortInParallel t11 = new SortInParallel(toCalculateL, null); t11.start();
@@ -146,6 +151,7 @@ public class RIndex {
 
         List<Tuple<Integer, Integer>> sortedDistances = t5.getSorted();
 
+        System.out.println("Part 5");
 
         e = System.currentTimeMillis();
         System.out.println("Step 2 took: " + (e-s)/1000 + " seconds");
