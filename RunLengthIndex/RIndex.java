@@ -74,24 +74,9 @@ public class RIndex {
         ArrayList<int[]> SA = new ArrayList<>(); SA.add(suffixes); SA.add(suffixes);
         ArrayList<char[]> BWT = new ArrayList<>(); BWT.add(bwt); BWT.add(bwt); BWT.add(bwt);
 
-        //InParallel.PreRunsThread preRunsThread = new InParallel.PreRunsThread(preRunLengthIndex, bwt); preRunsThread.start();
         InParallel.DistancesThread distancesThread = new InParallel.DistancesThread(distances, BWT.get(0), SA.get(0)); distancesThread.start();
         InParallel.ToCalculateLThread toCalculateLThread = new InParallel.ToCalculateLThread(toCalculateL, BWT.get(1), SA.get(1)); toCalculateLThread.start();
         InParallel.PreDataThread preDataThread = new InParallel.PreDataThread(prePreData, BWT.get(2)); preDataThread.start();
-
-        /*
-        try {
-
-            preRunsThread.join();
-
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
-
-        this.sPrime = preRunsThread.getsPrime();
-        preRunLengthIndex = preRunsThread.getArrayList();
-
-         */
 
 
         for (int i=1; i< bwt.length; i++) {
@@ -108,11 +93,21 @@ public class RIndex {
                 (sizeOfText) - preRunLengthIndex.get(preRunLengthIndex.size()-1).y;
 
 
-        InParallel.ToCalculateRThread toCalculateRThread = new InParallel.ToCalculateRThread(preRunLengthIndex); toCalculateRThread.start();
 
         this.sPrime = preRunLengthIndex.stream().map(o -> o.x)
                 .collect(Collector.of(StringBuilder::new, StringBuilder::append, StringBuilder::append, StringBuilder::toString))
                 .toCharArray();
+
+
+
+        this.characters = preRunLengthIndex.stream().map(x -> x.x).distinct()
+                .collect(Collector.of(StringBuilder::new, StringBuilder::append, StringBuilder::append, StringBuilder::toString))
+                .toCharArray();
+
+        Arrays.sort(this.characters);
+
+
+        InParallel.ToCalculateRThread toCalculateRThread = new InParallel.ToCalculateRThread(preRunLengthIndex); toCalculateRThread.start();
 
 
         e = System.currentTimeMillis();
@@ -131,16 +126,10 @@ public class RIndex {
             occArrayOfSPrime[i] = toCalculateOccOfSPrime.get(current);
         }
 
+
         HashMap<Character, Integer> toBeC;
 
         toBeC = FMIndex.computeC(this.sPrime);
-
-
-        this.characters = preRunLengthIndex.stream().map(x -> x.x).distinct()
-                .collect(Collector.of(StringBuilder::new, StringBuilder::append, StringBuilder::append, StringBuilder::toString))
-                        .toCharArray();
-
-        Arrays.sort(this.characters);
 
 
         for (int i=0; i<this.sPrime.length; i+=64) {

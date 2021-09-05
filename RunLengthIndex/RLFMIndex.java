@@ -68,18 +68,6 @@ public class RLFMIndex {
             System.exit(0);
         }
 
-
-
-        /*
-        String data = getReadFile("C:\\Users\\Admin\\Downloads\\Texts\\dna\\dna");
-
-        data = data.substring(0, 20000000);
-
-        char[] pattern = "AACCTTGGAA".toCharArray();
-
-         */
-
-
         data = Character.MIN_VALUE + data;
 
         System.out.println();
