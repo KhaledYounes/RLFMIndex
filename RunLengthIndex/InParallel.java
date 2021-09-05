@@ -27,8 +27,6 @@ public class InParallel {
                 }
             }
 
-            System.out.println(1);
-
             for (int i=0; i<this.arrayList.size()-1; i++) {
                 this.arrayList.get(i).y = this.arrayList.get(i + 1).y - this.arrayList.get(i).y;
             }
@@ -37,13 +35,10 @@ public class InParallel {
                     (bwt.length) - this.arrayList.get(this.arrayList.size()-1).y;
 
 
-            System.out.println(2);
-
             this.sPrime = this.arrayList.stream().map(o -> o.x)
                     .collect(Collector.of(StringBuilder::new, StringBuilder::append, StringBuilder::append, StringBuilder::toString))
                     .toCharArray();
 
-            System.out.println(3);
         }
 
         public char[] getsPrime() {
@@ -84,7 +79,6 @@ public class InParallel {
             this.R = Arrays.stream(this.arrayList.stream().map(o -> o.y)
                     .toArray(Integer[]::new)).mapToInt(Integer::intValue).toArray();
 
-
         }
 
         public int[] getR() {
@@ -123,8 +117,10 @@ public class InParallel {
 
             this.arrayList.sort(Comparator.comparing(o -> o.x));
 
+
             this.L = Arrays.stream(this.arrayList.stream().map(x -> this.suffixes[x.y])
                     .toArray(Integer[]::new)).mapToInt(Integer::intValue).toArray();
+
 
         }
 
@@ -160,7 +156,6 @@ public class InParallel {
 
             this.sorted = this.arrayList.parallelStream().sorted(Comparator.comparing(o -> o.x)).collect(Collectors.toList());
 
-
             int[] distancesKeysArray = new int[this.sorted.size()];
             int[] distancesValuesArray = new int[this.sorted.size()];
 
@@ -172,7 +167,6 @@ public class InParallel {
 
             this.keyDistance = distancesKeysArray;
             this.valueDistance = distancesValuesArray;
-
 
         }
 

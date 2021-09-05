@@ -45,6 +45,7 @@ public class RLFMIndex {
         GraphLayout.parseInstance((Object) new int[]{1, 2, 3}).totalSize();
 
         String data = "";
+
         char[] pattern = "".toCharArray();
 
         System.out.println();
@@ -65,6 +66,16 @@ public class RLFMIndex {
             System.out.println("args[2] -> (Optional) Enter up to which character you want index.");
             System.exit(0);
         }
+
+
+        /*
+        String data = getReadFile("C:\\Users\\Admin\\Downloads\\Texts\\dna\\dna");
+
+        data = data.substring(0, 25000000);
+
+        char[] pattern = "AACCTTGGAA".toCharArray();
+
+         */
 
         data = Character.MIN_VALUE + data;
 

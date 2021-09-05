@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.stream.Collector;
 
 public class RIndex {
 
@@ -71,12 +72,12 @@ public class RIndex {
         prePreData.add(1);
 
 
-        InParallel.PreRunsThread preRunsThread = new InParallel.PreRunsThread(preRunLengthIndex, bwt); preRunsThread.start();
+        //InParallel.PreRunsThread preRunsThread = new InParallel.PreRunsThread(preRunLengthIndex, bwt); preRunsThread.start();
         InParallel.DistancesThread distancesThread = new InParallel.DistancesThread(distances, bwt, suffixes); distancesThread.start();
         InParallel.ToCalculateLThread toCalculateLThread = new InParallel.ToCalculateLThread(toCalculateL, bwt, suffixes); toCalculateLThread.start();
         InParallel.PreDataThread preDataThread = new InParallel.PreDataThread(prePreData, bwt); preDataThread.start();
 
-
+        /*
         try {
 
             preRunsThread.join();
@@ -88,7 +89,29 @@ public class RIndex {
         this.sPrime = preRunsThread.getsPrime();
         preRunLengthIndex = preRunsThread.getArrayList();
 
+         */
+
+
+        for (int i=1; i< bwt.length; i++) {
+            if(bwt[i]!=bwt[i-1]) {
+                preRunLengthIndex.add(new Tuple<>(bwt[i], i));
+            }
+        }
+
+        for (int i=0; i<preRunLengthIndex.size()-1; i++) {
+            preRunLengthIndex.get(i).y = preRunLengthIndex.get(i + 1).y - preRunLengthIndex.get(i).y;
+        }
+
+        preRunLengthIndex.get(preRunLengthIndex.size()-1).y =
+                (sizeOfText) - preRunLengthIndex.get(preRunLengthIndex.size()-1).y;
+
+
         InParallel.ToCalculateRThread toCalculateRThread = new InParallel.ToCalculateRThread(preRunLengthIndex); toCalculateRThread.start();
+
+        this.sPrime = preRunLengthIndex.stream().map(o -> o.x)
+                .collect(Collector.of(StringBuilder::new, StringBuilder::append, StringBuilder::append, StringBuilder::toString))
+                .toCharArray();
+
 
         e = System.currentTimeMillis();
         System.out.println("Step 2: " + (e-s)/1000 + " seconds");
