@@ -71,11 +71,13 @@ public class RIndex {
         toCalculateL.add(new Tuple<>(bwt[0], 0));
         prePreData.add(1);
 
+        ArrayList<int[]> SA = new ArrayList<>(); SA.add(suffixes); SA.add(suffixes);
+        ArrayList<char[]> BWT = new ArrayList<>(); BWT.add(bwt); BWT.add(bwt); BWT.add(bwt);
 
         //InParallel.PreRunsThread preRunsThread = new InParallel.PreRunsThread(preRunLengthIndex, bwt); preRunsThread.start();
-        InParallel.DistancesThread distancesThread = new InParallel.DistancesThread(distances, bwt, suffixes); distancesThread.start();
-        InParallel.ToCalculateLThread toCalculateLThread = new InParallel.ToCalculateLThread(toCalculateL, bwt, suffixes); toCalculateLThread.start();
-        InParallel.PreDataThread preDataThread = new InParallel.PreDataThread(prePreData, bwt); preDataThread.start();
+        InParallel.DistancesThread distancesThread = new InParallel.DistancesThread(distances, BWT.get(0), SA.get(0)); distancesThread.start();
+        InParallel.ToCalculateLThread toCalculateLThread = new InParallel.ToCalculateLThread(toCalculateL, BWT.get(1), SA.get(1)); toCalculateLThread.start();
+        InParallel.PreDataThread preDataThread = new InParallel.PreDataThread(prePreData, BWT.get(2)); preDataThread.start();
 
         /*
         try {
@@ -123,21 +125,20 @@ public class RIndex {
         for (char c : toBeBwtC.keySet()) {
             toCalculateOccOfSPrime.put(c, 0);
         }
-        for(int i=0; i<sPrime.length; i++) {
-            char current = sPrime[i];
+        for(int i=0; i<this.sPrime.length; i++) {
+            char current = this.sPrime[i];
             toCalculateOccOfSPrime.put(current, toCalculateOccOfSPrime.get(current)+1);
             occArrayOfSPrime[i] = toCalculateOccOfSPrime.get(current);
         }
 
         HashMap<Character, Integer> toBeC;
 
-        toBeC = FMIndex.computeC(sPrime);
+        toBeC = FMIndex.computeC(this.sPrime);
 
-        Character[] charactersCharacter = preRunLengthIndex.stream().map(x -> x.x).distinct().toArray(Character[]::new);
-        this.characters = new char[charactersCharacter.length];
-        for (int i=0; i<this.characters.length; i++) {
-            this.characters[i] = charactersCharacter[i];
-        }
+
+        this.characters = preRunLengthIndex.stream().map(x -> x.x).distinct()
+                .collect(Collector.of(StringBuilder::new, StringBuilder::append, StringBuilder::append, StringBuilder::toString))
+                        .toCharArray();
 
         Arrays.sort(this.characters);
 
@@ -203,7 +204,6 @@ public class RIndex {
         this.R = toCalculateRThread.getR();
         this.keyDistance = distancesThread.getKeyDistance();
         this.valueDistance = distancesThread.getValueDistance();
-
 
         e = System.currentTimeMillis();
         System.out.println("Step 4: " + (e-s)/1000 + " seconds");

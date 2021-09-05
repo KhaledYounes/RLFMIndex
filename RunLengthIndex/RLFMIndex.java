@@ -44,6 +44,7 @@ public class RLFMIndex {
 
         GraphLayout.parseInstance((Object) new int[]{1, 2, 3}).totalSize();
 
+
         String data = "";
 
         char[] pattern = "".toCharArray();
@@ -68,14 +69,16 @@ public class RLFMIndex {
         }
 
 
+
         /*
         String data = getReadFile("C:\\Users\\Admin\\Downloads\\Texts\\dna\\dna");
 
-        data = data.substring(0, 25000000);
+        data = data.substring(0, 20000000);
 
         char[] pattern = "AACCTTGGAA".toCharArray();
 
          */
+
 
         data = Character.MIN_VALUE + data;
 
