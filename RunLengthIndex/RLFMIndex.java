@@ -86,16 +86,16 @@ public class RLFMIndex {
 
         System.out.println("Size (Bits per symbol) of the FM index is: " + (double) GraphLayout.parseInstance(fmIndex).totalSize()/data.length());
 
-        startTime = System.currentTimeMillis();
+        startTime = System.nanoTime();
 
         int [] fmLocate = fmIndex.locate(pattern);
 
+        endTime = System.nanoTime();
+
         System.out.println(Arrays.toString(fmLocate));
 
-        endTime = System.currentTimeMillis();
-
         if (fmLocate.length != 0) {
-            System.out.println("Time taken by the query with FM index equals: " + (double) (endTime - startTime) / fmLocate.length + " milliseconds per occurrence.");
+            System.out.println("Time taken by the query with FM index equals: " + ( (endTime - startTime)/1000.0) / fmLocate.length + " microseconds per occurrence.");
         }
 
         System.out.println();
@@ -116,16 +116,16 @@ public class RLFMIndex {
 
         System.out.println("Size (Bits per symbol) of the r index is: " + (double) GraphLayout.parseInstance(rIndex).totalSize()/data.length());
 
-        startTime = System.currentTimeMillis();
+        startTime = System.nanoTime();
 
         int[] rLocate = rIndex.locate(pattern);
 
+        endTime = System.nanoTime();
+
         System.out.println(Arrays.toString(rLocate));
 
-        endTime = System.currentTimeMillis();
-
         if (rLocate.length != 0) {
-            System.out.println("Time taken by the query with r index equals: " + (double) (endTime - startTime) / rLocate.length + " milliseconds per occurrence.");
+            System.out.println("Time taken by the query with r index equals: " + ((endTime - startTime)/1000.0) / rLocate.length + " microseconds per occurrence.");
         }
 
         System.out.println();
