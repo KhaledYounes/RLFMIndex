@@ -71,7 +71,6 @@ public class RIndex {
         prePreData.add(1);
 
 
-
         InParallel.PreRunsThread preRunsThread = new InParallel.PreRunsThread(preRunLengthIndex, bwt); preRunsThread.start();
         InParallel.DistancesThread distancesThread = new InParallel.DistancesThread(distances, bwt, suffixes); distancesThread.start();
         InParallel.ToCalculateLThread toCalculateLThread = new InParallel.ToCalculateLThread(toCalculateL, bwt, suffixes); toCalculateLThread.start();

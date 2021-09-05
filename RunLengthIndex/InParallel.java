@@ -27,6 +27,8 @@ public class InParallel {
                 }
             }
 
+            System.out.println(1);
+
             for (int i=0; i<this.arrayList.size()-1; i++) {
                 this.arrayList.get(i).y = this.arrayList.get(i + 1).y - this.arrayList.get(i).y;
             }
@@ -35,11 +37,13 @@ public class InParallel {
                     (bwt.length) - this.arrayList.get(this.arrayList.size()-1).y;
 
 
+            System.out.println(2);
+
             this.sPrime = this.arrayList.stream().map(o -> o.x)
                     .collect(Collector.of(StringBuilder::new, StringBuilder::append, StringBuilder::append, StringBuilder::toString))
                     .toCharArray();
 
-
+            System.out.println(3);
         }
 
         public char[] getsPrime() {
