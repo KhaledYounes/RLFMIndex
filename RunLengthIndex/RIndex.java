@@ -49,7 +49,7 @@ public class RIndex {
         T = null;
 
         e = System.currentTimeMillis();
-        System.out.println("Step 1 took: " + (e-s)/1000 + " seconds");
+        System.out.println("Step 1: " + (e-s)/1000 + " seconds");
         s = System.currentTimeMillis();
 
         HashMap<Character, Integer> toBeBwtC;
@@ -92,7 +92,7 @@ public class RIndex {
         InParallel.ToCalculateRThread toCalculateRThread = new InParallel.ToCalculateRThread(preRunLengthIndex); toCalculateRThread.start();
 
         e = System.currentTimeMillis();
-        System.out.println("Step 2 took: " + (e-s)/1000 + " seconds");
+        System.out.println("Step 2: " + (e-s)/1000 + " seconds");
         s = System.currentTimeMillis();
 
         int[] occArrayOfSPrime = new int[this.sPrime.length];
@@ -144,7 +144,7 @@ public class RIndex {
 
 
         e = System.currentTimeMillis();
-        System.out.println("Step 3 took: " + (e-s)/1000 + " seconds");
+        System.out.println("Step 3: " + (e-s)/1000 + " seconds");
         s = System.currentTimeMillis();
 
 
@@ -184,7 +184,7 @@ public class RIndex {
 
 
         e = System.currentTimeMillis();
-        System.out.println("Step 4 took: " + (e-s)/1000 + " seconds");
+        System.out.println("Step 4: " + (e-s)/1000 + " seconds");
         System.out.println();
 
     }
