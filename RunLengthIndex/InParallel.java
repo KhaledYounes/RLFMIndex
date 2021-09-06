@@ -1,8 +1,6 @@
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public class InParallel {
@@ -31,8 +29,7 @@ public class InParallel {
 
             }
 
-            this.R = Arrays.stream(this.arrayList.stream().map(o -> o.y)
-                    .toArray(Integer[]::new)).mapToInt(Integer::intValue).toArray();
+            this.R = this.arrayList.parallelStream().map(o -> o.y).mapToInt(Integer::intValue).toArray();
 
         }
 
@@ -72,10 +69,7 @@ public class InParallel {
 
             this.arrayList.sort(Comparator.comparing(o -> o.x));
 
-
-            this.L = Arrays.stream(this.arrayList.stream().map(x -> this.suffixes[x.y])
-                    .toArray(Integer[]::new)).mapToInt(Integer::intValue).toArray();
-
+            this.L = this.arrayList.parallelStream().map(x -> this.suffixes[x.y]).mapToInt(Integer::intValue).toArray();
 
         }
 
@@ -116,8 +110,9 @@ public class InParallel {
 
 
             for(int i=0; i< this.sorted.size(); i++) {
-                distancesKeysArray[i] = this.sorted.get(i).x;
-                distancesValuesArray[i] = this.sorted.get(i).y;
+                Tuple<Integer, Integer> temp = this.sorted.get(i);
+                distancesKeysArray[i] = temp.x;
+                distancesValuesArray[i] = temp.y;
             }
 
             this.keyDistance = distancesKeysArray;
@@ -155,7 +150,7 @@ public class InParallel {
                 }
             }
 
-            this.preData = this.arrayList.stream().mapToInt(Integer::intValue).toArray();
+            this.preData = this.arrayList.parallelStream().mapToInt(Integer::intValue).toArray();
 
         }
 

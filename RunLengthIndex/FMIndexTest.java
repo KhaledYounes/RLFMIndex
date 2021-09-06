@@ -8,7 +8,7 @@ class FMIndexTest {
 
     char[] pattern = "la".toCharArray();
 
-    FMIndex fmIndex = new FMIndex(text);
+    FMIndex fmIndex = new FMIndex(text, 64);
 
     @org.junit.jupiter.api.Test
     void computeC() {

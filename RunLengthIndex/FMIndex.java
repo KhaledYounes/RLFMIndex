@@ -1,5 +1,4 @@
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class FMIndex {
 
@@ -7,10 +6,13 @@ public class FMIndex {
     private final int[][] rankInitial;
     private final char[] bwtOfText;
     private final char[] characters;
-    int[] sampledIndex;
-    int[] suffixes;
+    private final int[] sampledIndex;
+    private final int[] suffixes;
+    private int sample;
 
-    FMIndex(String Text) {
+    FMIndex(String Text, int sample) {
+
+        this.sample = sample;
 
         char[] T = Text.toCharArray();
         int n = T.length;
@@ -39,20 +41,19 @@ public class FMIndex {
         ArrayList<Integer> suffixValues = new ArrayList<>();
 
 
-        if (suffixes.length < 64) {
+        if (suffixes.length < this.sample) {
             for (int i=0; i< suffixes.length; i++) {
                 suffixKeys.add(i);
                 suffixValues.add(suffixes[i]);
             }
         } else {
             for (int i=0; i< suffixes.length; i++) {
-                if (suffixes[i]%64==0)  {
+                if (suffixes[i]%this.sample==0)  {
                     suffixKeys.add(i);
                     suffixValues.add(suffixes[i]);
                 }
             }
         }
-
 
         int[] suffixKeysArray = new int[suffixKeys.size()];
         int[] suffixValuesArray = new int [suffixKeys.size()];
@@ -65,27 +66,29 @@ public class FMIndex {
         this.sampledIndex = suffixKeysArray;
         this.suffixes = suffixValuesArray;
 
+        this.sample *= 4;
+
         HashMap<Character, Integer> toBeC;
 
         toBeC = computeC(bwt);
 
         ArrayList<HashMap<Character, Integer>> preRankInitial = new ArrayList<>();
 
-        for (int i=0; i<bwt.length; i+=64) {
+        for (int i=0; i<bwt.length; i+= this.sample) {
 
             HashMap<Character, Integer> hashMap = new HashMap<>();
 
             for (char c : toBeC.keySet()) {
 
                 int k = i;
-                int lastIndex = i - 64;
+                int lastIndex = i - this.sample;
                 while ( k>0 && k>lastIndex && bwt[k]!=c) k--;
 
                 if(k==0){
                     if(bwt[0]==c) hashMap.put(c, occArray[k]);
                     else hashMap.put(c, 0);
                 } else if (k==lastIndex){
-                    hashMap.put(c, preRankInitial.get(k/64).get(c));
+                    hashMap.put(c, preRankInitial.get(k/this.sample).get(c));
                 } else {
                     hashMap.put(c, occArray[k]);
                 }
@@ -157,16 +160,16 @@ public class FMIndex {
 
         q--;
 
-        int index = q/64;
+        int index = q/this.sample;
 
-        if (q % 64 == 0) {
+        if (q % this.sample == 0) {
             return rankInitial[index][indexInCharacters];
         } else {
 
             int preValue = rankInitial[index][indexInCharacters];
             int toAdd = 0;
 
-            for (int i = (64*index)+1; i<=q; i++) {
+            for (int i = (this.sample*index)+1; i<=q; i++) {
                 if(bwt[i]==c) toAdd++;
             }
             return preValue+toAdd;

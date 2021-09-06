@@ -16,8 +16,11 @@ public class RIndex {
     private final int lastSuffix;
     private final int sizeOfText;
     private int currentSuffix;
+    private final int sample;
 
-    public RIndex (String Text) {
+    public RIndex (String Text, int sample) {
+
+        this.sample = 4*sample;
 
         long s, e;
         s = System.currentTimeMillis();
@@ -93,14 +96,12 @@ public class RIndex {
                 (sizeOfText) - preRunLengthIndex.get(preRunLengthIndex.size()-1).y;
 
 
-
-        this.sPrime = preRunLengthIndex.stream().map(o -> o.x)
+        this.sPrime = preRunLengthIndex.parallelStream().map(o -> o.x)
                 .collect(Collector.of(StringBuilder::new, StringBuilder::append, StringBuilder::append, StringBuilder::toString))
                 .toCharArray();
 
 
-
-        this.characters = preRunLengthIndex.stream().map(x -> x.x).distinct()
+        this.characters = preRunLengthIndex.parallelStream().map(x -> x.x).distinct()
                 .collect(Collector.of(StringBuilder::new, StringBuilder::append, StringBuilder::append, StringBuilder::toString))
                 .toCharArray();
 
@@ -132,20 +133,20 @@ public class RIndex {
         toBeC = FMIndex.computeC(this.sPrime);
 
 
-        for (int i=0; i<this.sPrime.length; i+=64) {
+        for (int i=0; i<this.sPrime.length; i+=this.sample) {
 
             HashMap<Character, Integer> hashMap = new HashMap<>();
             for (char c : toBeC.keySet()) {
 
                 int k = i;
-                int lastIndex = i - 64;
+                int lastIndex = i - this.sample;
                 while ( k>0 && k>lastIndex && this.sPrime[k]!=c) k--;
 
                 if(k==0){
                     if(this.sPrime[0]==c) hashMap.put(c, occArrayOfSPrime[k]);
                     else hashMap.put(c, 0);
                 } else if (k==lastIndex){
-                    hashMap.put(c, preRankInitial.get(k/64).get(c));
+                    hashMap.put(c, preRankInitial.get(k/this.sample).get(c));
                 } else {
                     hashMap.put(c, occArrayOfSPrime[k]);
                 }
@@ -304,19 +305,21 @@ public class RIndex {
 
         q--;
 
-        int index = q/64;
+        int index = q/this.sample;
 
-        if (q % 64 == 0) {
+        if (q % this.sample == 0) {
             return this.rankInitial[index][indexInCharacters];
         } else {
 
             int preValue = this.rankInitial[index][indexInCharacters];
             int toAdd = 0;
 
-            for (int i = (64*index)+1; i<=q; i++) {
+            for (int i = (this.sample*index)+1; i<=q; i++) {
                 if(this.sPrime[i]==c) toAdd++;
             }
+
             return preValue+toAdd;
+
         }
 
     }

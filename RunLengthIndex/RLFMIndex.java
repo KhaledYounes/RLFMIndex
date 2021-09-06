@@ -44,29 +44,44 @@ public class RLFMIndex {
 
         GraphLayout.parseInstance((Object) new int[]{1, 2, 3}).totalSize();
 
-
         String data = "";
 
         char[] pattern = "".toCharArray();
 
+        int sample = 64;
+
         System.out.println();
 
-        if (args.length==1) {
-            data = getReadFile(args[0]);
-        }
-        else if (args.length==2) {
-            data = getReadFile(args[0]);
-            pattern = args[1].toCharArray();
-        } else if (args.length==3) {
-            data = getReadFile(args[0]);
-            pattern = args[1].toCharArray();
-            data = data.substring(0, Integer.parseInt(args[2]));
-        } else {
+        try {
+
+            if (args.length==1) {
+                data = getReadFile(args[0]);
+            }
+            else if (args.length==2) {
+                data = getReadFile(args[0]);
+                pattern = args[1].toCharArray();
+            } else if (args.length==3) {
+                data = getReadFile(args[0]);
+                pattern = args[1].toCharArray();
+                data = data.substring(0, Integer.parseInt(args[2]));
+            } else if (args.length==4){
+                data = getReadFile(args[0]);
+                pattern = args[1].toCharArray();
+                data = data.substring(0, Integer.parseInt(args[2]));
+                sample = Integer.parseInt(args[3]);
+            } else {
+                throw new IllegalArgumentException();
+            }
+
+        } catch (Exception exception) {
             System.out.println("args[0] -> Enter the path of the file to be indexed.");
             System.out.println("args[1] -> (Optional) Enter a pattern to search for.");
             System.out.println("args[2] -> (Optional) Enter up to which character you want index.");
+            System.out.println("args[3] -> (Optional) Enter the grade of the sampling.");
+            System.out.println();
             System.exit(0);
         }
+
 
         data = Character.MIN_VALUE + data;
 
@@ -78,7 +93,7 @@ public class RLFMIndex {
 
         long startTime = System.currentTimeMillis();
 
-        FMIndex fmIndex = new FMIndex(data);
+        FMIndex fmIndex = new FMIndex(data, sample);
 
         long endTime = System.currentTimeMillis();
 
@@ -108,7 +123,7 @@ public class RLFMIndex {
 
         startTime = System.currentTimeMillis();
 
-        RIndex rIndex = new RIndex(data);
+        RIndex rIndex = new RIndex(data, sample);
 
         endTime = System.currentTimeMillis();
 
