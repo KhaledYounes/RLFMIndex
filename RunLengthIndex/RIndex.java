@@ -74,12 +74,16 @@ public class RIndex {
         toCalculateL.add(new Tuple<>(bwt[0], 0));
         prePreData.add(1);
 
-        ArrayList<int[]> SA = new ArrayList<>(); SA.add(suffixes); SA.add(suffixes);
-        ArrayList<char[]> BWT = new ArrayList<>(); BWT.add(bwt); BWT.add(bwt); BWT.add(bwt);
+        int[] suffixes_1 = suffixes.clone();
+        int[] suffixes_2 = suffixes.clone();
 
-        InParallel.DistancesThread distancesThread = new InParallel.DistancesThread(distances, BWT.get(0), SA.get(0)); distancesThread.start();
-        InParallel.ToCalculateLThread toCalculateLThread = new InParallel.ToCalculateLThread(toCalculateL, BWT.get(1), SA.get(1)); toCalculateLThread.start();
-        InParallel.PreDataThread preDataThread = new InParallel.PreDataThread(prePreData, BWT.get(2)); preDataThread.start();
+        char[] bwt_1 = bwt.clone();
+        char[] bwt_2 = bwt.clone();
+        char[] bwt_3 = bwt.clone();
+
+        InParallel.DistancesThread distancesThread = new InParallel.DistancesThread(distances, bwt_1, suffixes_1); distancesThread.start();
+        InParallel.ToCalculateLThread toCalculateLThread = new InParallel.ToCalculateLThread(toCalculateL, bwt_2, suffixes_2); toCalculateLThread.start();
+        InParallel.PreDataThread preDataThread = new InParallel.PreDataThread(prePreData, bwt_3); preDataThread.start();
 
 
         for (int i=1; i< bwt.length; i++) {
