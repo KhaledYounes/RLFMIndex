@@ -60,49 +60,39 @@ public class RIndex {
 
         toBeBwtC =  FMIndex.computeC(bwt);
 
-        ArrayList<Tuple<Character, Integer>> preRunLengthIndex = new ArrayList<>();
-
-        ArrayList<Tuple<Character, Integer>> toCalculateL = new ArrayList<>();
-
         ArrayList<Integer> prePreData = new ArrayList<>();
-
-        ArrayList<Tuple<Integer, Integer>> distances = new ArrayList<>();
 
         ArrayList<HashMap<Character, Integer>> preRankInitial = new ArrayList<>();
 
-        preRunLengthIndex.add(new Tuple<>(bwt[0], 0));
-        toCalculateL.add(new Tuple<>(bwt[0], 0));
         prePreData.add(1);
-
-        int[] suffixes_1 = suffixes.clone();
-        int[] suffixes_2 = suffixes.clone();
-
-        char[] bwt_1 = bwt.clone();
-        char[] bwt_2 = bwt.clone();
-        char[] bwt_3 = bwt.clone();
-
-        InParallel.DistancesThread distancesThread = new InParallel.DistancesThread(distances, bwt_1, suffixes_1); distancesThread.start();
-        InParallel.ToCalculateLThread toCalculateLThread = new InParallel.ToCalculateLThread(toCalculateL, bwt_2, suffixes_2); toCalculateLThread.start();
-        InParallel.PreDataThread preDataThread = new InParallel.PreDataThread(prePreData, bwt_3); preDataThread.start();
-
-
         for (int i=1; i< bwt.length; i++) {
             if(bwt[i]!=bwt[i-1]) {
-                preRunLengthIndex.add(new Tuple<>(bwt[i], i));
+                prePreData.add(i+1);
             }
         }
 
+        this.preData = prePreData.parallelStream().mapToInt(Integer::intValue).toArray();
+
+        InParallel.PreRunsThread preRunsThread = new InParallel.PreRunsThread(this.preData, bwt); preRunsThread.start();
+        InParallel.DistancesThread distancesThread = new InParallel.DistancesThread(this.preData, bwt, suffixes); distancesThread.start();
+        InParallel.ToCalculateLThread toCalculateLThread = new InParallel.ToCalculateLThread(this.preData, bwt, suffixes); toCalculateLThread.start();
+
+
         System.out.println("01");
 
-        for (int i=0; i<preRunLengthIndex.size()-1; i++) {
-            preRunLengthIndex.get(i).y = preRunLengthIndex.get(i + 1).y - preRunLengthIndex.get(i).y;
-        }
 
-        preRunLengthIndex.get(preRunLengthIndex.size()-1).y =
-                (sizeOfText) - preRunLengthIndex.get(preRunLengthIndex.size()-1).y;
+        try {
+
+            preRunsThread.join();
+
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
 
 
         System.out.println("02");
+
+        ArrayList<Tuple<Character, Integer>> preRunLengthIndex = preRunsThread.getPreRuns();
 
         this.sPrime = preRunLengthIndex.parallelStream().map(o -> o.x)
                 .collect(Collector.of(StringBuilder::new, StringBuilder::append, StringBuilder::append, StringBuilder::toString))
@@ -115,11 +105,9 @@ public class RIndex {
 
         Arrays.sort(this.characters);
 
-
         System.out.println("03");
 
         InParallel.ToCalculateRThread toCalculateRThread = new InParallel.ToCalculateRThread(preRunLengthIndex); toCalculateRThread.start();
-
 
         e = System.currentTimeMillis();
         System.out.println("Step 2: " + (e-s)/1000 + " seconds");
@@ -190,16 +178,14 @@ public class RIndex {
 
         try {
 
-            preDataThread.join();
             toCalculateLThread.join();
-            toCalculateRThread.join();
             distancesThread.join();
+            toCalculateRThread.join();
 
         } catch (Exception exception) {
             exception.printStackTrace();
         }
 
-        this.preData = preDataThread.getPreData();
         this.L = toCalculateLThread.getL();
         this.R = toCalculateRThread.getR();
         this.keyDistance = distancesThread.getKeyDistance();

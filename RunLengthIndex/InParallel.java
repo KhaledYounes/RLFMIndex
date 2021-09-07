@@ -1,9 +1,39 @@
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class InParallel {
+
+    public static class PreRunsThread extends Thread {
+
+        private int[] array;
+        private ArrayList<Tuple<Character, Integer>> preRuns = new ArrayList<>();
+        private char[] bwt;
+
+        public PreRunsThread (int[] array, char[] bwt) {
+            this.array = array.clone();
+            this.bwt = bwt.clone();
+        }
+
+        @Override
+        public void run() {
+
+            this.preRuns.add(new Tuple<>(bwt[0], 1));
+
+            for (int i=1; i<this.array.length-1; i++) {
+                int current = this.array[i]-1; int post = this.array[i+1]-1;
+                this.preRuns.add(new Tuple<>(bwt[current], post - current ));
+            }
+
+            this.preRuns.add(new Tuple<>(bwt[this.array[this.array.length-1]-1], bwt.length - (this.array[this.array.length-1] - 1) ));
+
+            System.out.println("41");
+
+        }
+
+        public ArrayList<Tuple<Character, Integer>> getPreRuns() {
+            return preRuns;
+        }
+    }
 
     public static class ToCalculateRThread extends Thread {
 
@@ -31,7 +61,6 @@ public class InParallel {
 
             }
 
-
             System.out.println("12");
 
             this.R = this.arrayList.parallelStream().map(o -> o.y).mapToInt(Integer::intValue).toArray();
@@ -49,42 +78,40 @@ public class InParallel {
 
     public static class ToCalculateLThread extends Thread {
 
-        private ArrayList<Tuple<Character, Integer>> arrayList;
+        private int[] array;
         private char[] bwt;
         private int[] suffixes;
         private int[] L;
 
-        public ToCalculateLThread (ArrayList<Tuple<Character, Integer>> arrayList, char[] bwt, int[] suffixes) {
-            this.arrayList = arrayList;
-            this.bwt = bwt;
-            this.suffixes = suffixes;
+        public ToCalculateLThread (int[] array, char[] bwt, int[] suffixes) {
+            this.array = array.clone();
+            this.bwt = bwt.clone();
+            this.suffixes = suffixes.clone();
         }
 
         @Override
         public void run() {
 
-            for (int i=1; i< this.bwt.length; i++) {
-                if(this.bwt[i]!=this.bwt[i-1]) {
-                    this.arrayList.add(new Tuple<>(bwt[i], i));
-                }
+            ArrayList<Tuple<Character, Integer>> tupleArrayList = new ArrayList<>();
+
+            tupleArrayList.add(new Tuple<>(bwt[0], 0));
+
+            for (int i=1; i<this.array.length-1; i++) {
+                int current = this.array[i]-1; int post = this.array[i+1] - 1;
+                tupleArrayList.add(new Tuple<>(bwt[current], post-1));
             }
+
+            tupleArrayList.add(new Tuple<>(bwt[this.array[this.array.length-1]-1], bwt.length-1));
 
             System.out.println("21");
 
-            for (int i=0; i<this.arrayList.size()-1; i++) {
-                this.arrayList.get(i).y = this.arrayList.get(i+1).y - 1;
-            }
-            this.arrayList.get(this.arrayList.size()-1).y = bwt.length - 1;
+            tupleArrayList.sort(Comparator.comparing(o -> o.x));
 
             System.out.println("22");
 
-            this.arrayList.sort(Comparator.comparing(o -> o.x));
+            this.L = tupleArrayList.parallelStream().map(x -> this.suffixes[x.y]).mapToInt(Integer::intValue).toArray();
 
             System.out.println("23");
-
-            this.L = this.arrayList.parallelStream().map(x -> this.suffixes[x.y]).mapToInt(Integer::intValue).toArray();
-
-            System.out.println("24");
 
         }
 
@@ -96,42 +123,42 @@ public class InParallel {
 
     public static class DistancesThread extends Thread {
 
-        private ArrayList<Tuple<Integer, Integer>> arrayList;
+        private int[] array;
         private char[] bwt;
         private int[] suffixes;
         private List<Tuple<Integer, Integer>> sorted;
         private int [] keyDistance;
         private int [] valueDistance;
 
-        public DistancesThread (ArrayList<Tuple<Integer, Integer>> arrayList, char[] bwt, int[] suffixes) {
-            this.arrayList = arrayList;
-            this.bwt = bwt;
-            this.suffixes = suffixes;
+        public DistancesThread (int[] array, char[] bwt, int[] suffixes) {
+            this.array = array.clone();
+            this.bwt = bwt.clone();
+            this.suffixes = suffixes.clone();
         }
 
         @Override
         public void run() {
 
-            for (int i=1; i< this.bwt.length; i++) {
-                if(this.bwt[i]!=this.bwt[i-1]) {
-                    this.arrayList.add(new Tuple<>(suffixes[i], suffixes[i-1]-suffixes[i]));
-                }
+            ArrayList<Tuple<Integer, Integer>> tupleArrayList = new ArrayList<>();
+
+            for (int i=1; i<this.array.length; i++) {
+                int temp = this.array[i]-1;
+                tupleArrayList.add(new Tuple<>(suffixes[temp], suffixes[temp-1] - suffixes[temp]));
             }
 
             System.out.println("31");
 
-            this.sorted = this.arrayList.parallelStream().sorted(Comparator.comparing(o -> o.x)).collect(Collectors.toList());
+            this.sorted = tupleArrayList.parallelStream().sorted(Comparator.comparing(o -> o.x)).collect(Collectors.toList());
 
             System.out.println("32");
 
             int[] distancesKeysArray = new int[this.sorted.size()];
             int[] distancesValuesArray = new int[this.sorted.size()];
 
-
             for(int i=0; i< this.sorted.size(); i++) {
-                Tuple<Integer, Integer> temp = this.sorted.get(i);
-                distancesKeysArray[i] = temp.x;
-                distancesValuesArray[i] = temp.y;
+                Tuple<Integer, Integer> tempTuple = this.sorted.get(i);
+                distancesKeysArray[i] = tempTuple.x;
+                distancesValuesArray[i] = tempTuple.y;
             }
 
             this.keyDistance = distancesKeysArray;
@@ -148,40 +175,7 @@ public class InParallel {
         public int[] getValueDistance() {
             return valueDistance;
         }
-    }
 
-
-    public static class PreDataThread extends Thread {
-
-        private ArrayList<Integer> arrayList;
-        private char[] bwt;
-        private int[] preData;
-
-        public PreDataThread (ArrayList<Integer> arrayList, char[] bwt) {
-            this.arrayList = arrayList;
-            this.bwt = bwt;
-        }
-
-        @Override
-        public void run() {
-
-            for (int i=1; i< this.bwt.length; i++) {
-                if(this.bwt[i]!=this.bwt[i-1]) {
-                    this.arrayList.add(i+1);
-                }
-            }
-
-            System.out.println("41");
-
-            this.preData = this.arrayList.parallelStream().mapToInt(Integer::intValue).toArray();
-
-            System.out.println("42");
-
-        }
-
-        public int[] getPreData() {
-            return preData;
-        }
     }
 
 }

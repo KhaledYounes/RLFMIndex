@@ -86,7 +86,6 @@ public class RLFMIndex {
             System.exit(0);
         }
 
-
         data = Character.MIN_VALUE + data;
 
         System.out.println();
