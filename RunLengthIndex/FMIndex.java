@@ -14,6 +14,9 @@ public class FMIndex {
 
         this.sample = sample;
 
+        long s, e;
+        s = System.currentTimeMillis();
+
         char[] T = Text.toCharArray();
         int n = T.length;
         char[] bwt = new char[n];
@@ -36,6 +39,11 @@ public class FMIndex {
 
         V = null;
         T = null;
+
+        e = System.currentTimeMillis();
+        System.out.println("Step 1 (constructing the suffix array): " + (e-s)/1000 + " seconds");
+        s = System.currentTimeMillis();
+
 
         ArrayList<Integer> suffixKeys = new ArrayList<>();
         ArrayList<Integer> suffixValues = new ArrayList<>();
@@ -121,6 +129,10 @@ public class FMIndex {
         for(int i=0; i<this.characters.length; i++) {
             this.C[i] = toBeC.get(this.characters[i]);
         }
+
+        e = System.currentTimeMillis();
+        System.out.println("Step 2 (constructing the r index): " + (e-s)/1000 + " seconds");
+        System.out.println();
 
     }
 

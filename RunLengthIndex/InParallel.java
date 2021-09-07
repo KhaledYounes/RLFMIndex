@@ -26,8 +26,6 @@ public class InParallel {
 
             this.preRuns.add(new Tuple<>(bwt[this.array[this.array.length-1]-1], bwt.length - (this.array[this.array.length-1] - 1) ));
 
-            System.out.println("41");
-
         }
 
         public ArrayList<Tuple<Character, Integer>> getPreRuns() {
@@ -51,8 +49,6 @@ public class InParallel {
 
             this.arrayList.sort(Comparator.comparing(o -> o.x));
 
-            System.out.println("11");
-
             for(int i=1; i<this.arrayList.size(); i++) {
 
                 if (this.arrayList.get(i).x == this.arrayList.get(i-1).x) {
@@ -61,11 +57,7 @@ public class InParallel {
 
             }
 
-            System.out.println("12");
-
             this.R = this.arrayList.parallelStream().map(o -> o.y).mapToInt(Integer::intValue).toArray();
-
-            System.out.println("13");
 
         }
 
@@ -103,15 +95,9 @@ public class InParallel {
 
             tupleArrayList.add(new Tuple<>(bwt[this.array[this.array.length-1]-1], bwt.length-1));
 
-            System.out.println("21");
-
             tupleArrayList.sort(Comparator.comparing(o -> o.x));
 
-            System.out.println("22");
-
             this.L = tupleArrayList.parallelStream().map(x -> this.suffixes[x.y]).mapToInt(Integer::intValue).toArray();
-
-            System.out.println("23");
 
         }
 
@@ -146,11 +132,7 @@ public class InParallel {
                 tupleArrayList.add(new Tuple<>(suffixes[temp], suffixes[temp-1] - suffixes[temp]));
             }
 
-            System.out.println("31");
-
             this.sorted = tupleArrayList.parallelStream().sorted(Comparator.comparing(o -> o.x)).collect(Collectors.toList());
-
-            System.out.println("32");
 
             int[] distancesKeysArray = new int[this.sorted.size()];
             int[] distancesValuesArray = new int[this.sorted.size()];
@@ -163,8 +145,6 @@ public class InParallel {
 
             this.keyDistance = distancesKeysArray;
             this.valueDistance = distancesValuesArray;
-
-            System.out.println("33");
 
         }
 

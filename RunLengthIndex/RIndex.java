@@ -53,7 +53,7 @@ public class RIndex {
         T = null;
 
         e = System.currentTimeMillis();
-        System.out.println("Step 1: " + (e-s)/1000 + " seconds");
+        System.out.println("Step 1 (constructing the suffix array): " + (e-s)/1000 + " seconds");
         s = System.currentTimeMillis();
 
         HashMap<Character, Integer> toBeBwtC;
@@ -77,10 +77,6 @@ public class RIndex {
         InParallel.DistancesThread distancesThread = new InParallel.DistancesThread(this.preData, bwt, suffixes); distancesThread.start();
         InParallel.ToCalculateLThread toCalculateLThread = new InParallel.ToCalculateLThread(this.preData, bwt, suffixes); toCalculateLThread.start();
 
-
-        System.out.println("01");
-
-
         try {
 
             preRunsThread.join();
@@ -88,9 +84,6 @@ public class RIndex {
         } catch (Exception exception) {
             exception.printStackTrace();
         }
-
-
-        System.out.println("02");
 
         ArrayList<Tuple<Character, Integer>> preRunLengthIndex = preRunsThread.getPreRuns();
 
@@ -105,13 +98,7 @@ public class RIndex {
 
         Arrays.sort(this.characters);
 
-        System.out.println("03");
-
         InParallel.ToCalculateRThread toCalculateRThread = new InParallel.ToCalculateRThread(preRunLengthIndex); toCalculateRThread.start();
-
-        e = System.currentTimeMillis();
-        System.out.println("Step 2: " + (e-s)/1000 + " seconds");
-        s = System.currentTimeMillis();
 
         int[] occArrayOfSPrime = new int[this.sPrime.length];
 
@@ -125,11 +112,9 @@ public class RIndex {
             occArrayOfSPrime[i] = toCalculateOccOfSPrime.get(current);
         }
 
-
         HashMap<Character, Integer> toBeC;
 
         toBeC = FMIndex.computeC(this.sPrime);
-
 
         for (int i=0; i<this.sPrime.length; i+=this.sample) {
 
@@ -152,12 +137,6 @@ public class RIndex {
             }
             preRankInitial.add(hashMap);
         }
-
-
-        e = System.currentTimeMillis();
-        System.out.println("Step 3: " + (e-s)/1000 + " seconds");
-        s = System.currentTimeMillis();
-
 
         this.rankInitial = new int[preRankInitial.size()][this.characters.length];
         for (int i=0; i < this.rankInitial.length; i++) {
@@ -192,7 +171,7 @@ public class RIndex {
         this.valueDistance = distancesThread.getValueDistance();
 
         e = System.currentTimeMillis();
-        System.out.println("Step 4: " + (e-s)/1000 + " seconds");
+        System.out.println("Step 2 (constructing the r index): " + (e-s)/1000 + " seconds");
         System.out.println();
 
     }
