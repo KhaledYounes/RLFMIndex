@@ -131,7 +131,7 @@ public class FMIndex {
         }
 
         e = System.currentTimeMillis();
-        System.out.println("Step 2 (constructing the r index): " + (e-s)/1000 + " seconds");
+        System.out.println("Step 2 (constructing the fm index): " + (e-s)/1000 + " seconds");
         System.out.println();
 
     }
