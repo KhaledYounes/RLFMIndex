@@ -88,6 +88,8 @@ public class RIndex {
             }
         }
 
+        System.out.println("01");
+
         for (int i=0; i<preRunLengthIndex.size()-1; i++) {
             preRunLengthIndex.get(i).y = preRunLengthIndex.get(i + 1).y - preRunLengthIndex.get(i).y;
         }
@@ -95,6 +97,8 @@ public class RIndex {
         preRunLengthIndex.get(preRunLengthIndex.size()-1).y =
                 (sizeOfText) - preRunLengthIndex.get(preRunLengthIndex.size()-1).y;
 
+
+        System.out.println("02");
 
         this.sPrime = preRunLengthIndex.parallelStream().map(o -> o.x)
                 .collect(Collector.of(StringBuilder::new, StringBuilder::append, StringBuilder::append, StringBuilder::toString))
@@ -107,6 +111,8 @@ public class RIndex {
 
         Arrays.sort(this.characters);
 
+
+        System.out.println("03");
 
         InParallel.ToCalculateRThread toCalculateRThread = new InParallel.ToCalculateRThread(preRunLengthIndex); toCalculateRThread.start();
 

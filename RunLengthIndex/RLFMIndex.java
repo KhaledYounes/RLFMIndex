@@ -63,11 +63,15 @@ public class RLFMIndex {
             } else if (args.length==3) {
                 data = getReadFile(args[0]);
                 pattern = args[1].toCharArray();
-                data = data.substring(0, Integer.parseInt(args[2]));
+                if (!args[2].equals("full")) {
+                    data = data.substring(0, Integer.parseInt(args[2]));
+                }
             } else if (args.length==4){
                 data = getReadFile(args[0]);
                 pattern = args[1].toCharArray();
-                data = data.substring(0, Integer.parseInt(args[2]));
+                if (!args[2].equals("full")) {
+                    data = data.substring(0, Integer.parseInt(args[2]));
+                }
                 sample = Integer.parseInt(args[3]);
             } else {
                 throw new IllegalArgumentException();
