@@ -200,16 +200,15 @@ public class FMIndex {
         int i = P.length-1;
         char c = P[i], nc = nextGreatestAlphabet(this.characters, c);
 
-
         int first = this.C[Arrays.binarySearch(this.characters, c)] + 1;
         int last = this.C[Arrays.binarySearch(this.characters, nc)];
-
 
         if(c==nc) {
             last = bwtOfText.length;
         }
 
         while (first<=last && i>0) {
+
             c = P[i-1];
 
             first = this.C[Arrays.binarySearch(this.characters, c)] + rank(c, this.bwtOfText, first-1) + 1;
@@ -232,7 +231,7 @@ public class FMIndex {
     {
 
         int l = 0;
-        int r = alphabets.length-1;;
+        int r = alphabets.length-1;
 
         while (l <= r)
         {
@@ -301,7 +300,7 @@ public class FMIndex {
             t += 1;
         }
 
-        return this.suffixes[indexInKeys] + t;
+        return ( (this.suffixes[indexInKeys] + t - 1) % bwtOfText.length ) + 1 ;
 
     }
 

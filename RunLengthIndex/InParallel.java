@@ -17,11 +17,11 @@ public class InParallel {
         @Override
         public void run() {
 
-            this.preRuns.add(new Tuple<>(bwt[0], 1));
+            this.preRuns.add(new Tuple<>(bwt[0], (this.array[1] - this.array[0])));
 
             for (int i=1; i<this.array.length-1; i++) {
-                int current = this.array[i]-1; int post = this.array[i+1]-1;
-                this.preRuns.add(new Tuple<>(bwt[current], post - current ));
+                int current = this.array[i]; int post = this.array[i+1];
+                this.preRuns.add(new Tuple<>(bwt[current-1], post - current ));
             }
 
             this.preRuns.add(new Tuple<>(bwt[this.array[this.array.length-1]-1], bwt.length - (this.array[this.array.length-1] - 1) ));

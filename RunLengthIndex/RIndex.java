@@ -193,7 +193,6 @@ public class RIndex {
         int first = this.bwtC[Arrays.binarySearch(this.characters, c)] + 1;
         int last = this.bwtC[Arrays.binarySearch(this.characters, nc)];
 
-
         if (nc==c) {
             last = sizeOfText;
         }

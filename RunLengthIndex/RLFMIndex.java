@@ -44,6 +44,7 @@ public class RLFMIndex {
 
         GraphLayout.parseInstance((Object) new int[]{1, 2, 3}).totalSize();
 
+
         String data = "";
 
         char[] pattern = "".toCharArray();
@@ -104,7 +105,7 @@ public class RLFMIndex {
 
         System.out.println("The size of the FM index is: " +  GraphLayout.parseInstance(fmIndex).totalSize()/1024/1024 + " megabytes.");
 
-        System.out.println("Size (Bits per symbol) of the FM index is: " + (double) GraphLayout.parseInstance(fmIndex).totalSize()/data.length());
+        System.out.println("Size (Bits per symbol) of the FM index is: " + (double) GraphLayout.parseInstance(fmIndex).totalSize()*8/data.length());
 
         startTime = System.nanoTime();
 
@@ -134,7 +135,7 @@ public class RLFMIndex {
 
         System.out.println("The size of the r index is: " +  GraphLayout.parseInstance(rIndex).totalSize()/1024/1024 + " megabytes.");
 
-        System.out.println("Size (Bits per symbol) of the r index is: " + (double) GraphLayout.parseInstance(rIndex).totalSize()/data.length());
+        System.out.println("Size (Bits per symbol) of the r index is: " + (double) GraphLayout.parseInstance(rIndex).totalSize()*8/data.length());
 
         startTime = System.nanoTime();
 
