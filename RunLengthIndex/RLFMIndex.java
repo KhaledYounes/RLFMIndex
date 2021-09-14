@@ -6,21 +6,6 @@ import java.util.*;
 
 public class RLFMIndex {
 
-    // code to get the occurrences array.
-    private static void unbwt(char[] T, char[] U, int[] LF, int n, int pidx) {
-        int[] C = new int[256];
-        int i, t;
-        for(i = 0; i < 256; ++i) { C[i] = 0; }
-        for(i = 0; i < n; ++i) { LF[i] = C[(int)(T[i] & 0xff)]++; }
-        for(i = 0, t = 0; i < 256; ++i) { t += C[i]; C[i] = t - C[i]; }
-        for(i = n - 1, t = 0; 0 <= i; --i) {
-            t = LF[t] + C[(int)((U[i] = T[t]) & 0xff)];
-            t += (t < pidx) ? 1 : 0;
-        }
-        C = null;
-    }
-
-
     private static String getReadFile (String filePath)
     {
         StringBuilder contentBuilder = new StringBuilder();
