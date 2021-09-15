@@ -118,7 +118,7 @@ public class RLFMIndex {
 
         System.out.println("Done with constructing the run length index. That took " + (endTime - startTime)/1000 + " seconds.");
 
-        System.out.println("Runs to length (n/r): " + (double)(data.length()/rIndex.getPreData().length) );
+        System.out.println("Runs to length (n/r): " + ((double) data.length()/rIndex.getPreData().length) );
 
         System.out.println("The size of the r index is: " +  GraphLayout.parseInstance(rIndex).totalSize()/1024/1024 + " megabytes.");
 
