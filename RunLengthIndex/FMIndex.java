@@ -20,10 +20,6 @@ public class FMIndex {
         char[] T = Text.toCharArray();
         int n = T.length;
         char[] bwt = new char[n];
-        char[] V = new char[n];
-        int[] occArray = new int[n];
-
-        int pidx = sais.bwtransform(T, bwt, occArray, n);
 
         int m = T.length;
         int[] suffixes = new int[m];
@@ -31,14 +27,11 @@ public class FMIndex {
         sais.suffixsort(T, suffixes, m);
         suffixes[0] = m;
 
-        unbwt(bwt, V, occArray, n, pidx);
-
-        for (int i=0; i<occArray.length; i++)
-            occArray[i] += 1;
-
-
-        V = null;
-        T = null;
+        for (int i=0; i<m; i++) {
+            int currentSuffix = suffixes[i];
+            if (currentSuffix > 0 ) bwt[i] = T[currentSuffix-1];
+            else bwt[i] = Character.MIN_VALUE;
+        }
 
         e = System.currentTimeMillis();
         System.out.println("Step 1 (constructing the suffix array): " + (e-s)/1000 + " seconds");
@@ -79,6 +72,18 @@ public class FMIndex {
         HashMap<Character, Integer> toBeC;
 
         toBeC = computeC(bwt);
+
+        int[] occArray = new int[m];
+
+        HashMap<Character, Integer> toCalculateOccOfText = new HashMap<>();
+        for (char c : toBeC.keySet()) {
+            toCalculateOccOfText.put(c, 0);
+        }
+        for(int i=0; i<m; i++) {
+            char current = bwt[i];
+            toCalculateOccOfText.put(current, toCalculateOccOfText.get(current)+1);
+            occArray[i] = toCalculateOccOfText.get(current);
+        }
 
         ArrayList<HashMap<Character, Integer>> preRankInitial = new ArrayList<>();
 
@@ -267,20 +272,6 @@ public class FMIndex {
 
         return result;
 
-    }
-
-    // code to get the occurrences array.
-    private static void unbwt(char[] T, char[] U, int[] LF, int n, int pidx) {
-        int[] C = new int[256];
-        int i, t;
-        for(i = 0; i < 256; ++i) { C[i] = 0; }
-        for(i = 0; i < n; ++i) { LF[i] = C[(int)(T[i] & 0xff)]++; }
-        for(i = 0, t = 0; i < 256; ++i) { t += C[i]; C[i] = t - C[i]; }
-        for(i = n - 1, t = 0; 0 <= i; --i) {
-            t = LF[t] + C[(int)((U[i] = T[t]) & 0xff)];
-            t += (t < pidx) ? 1 : 0;
-        }
-        C = null;
     }
 
     private int LF(int q) {

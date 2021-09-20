@@ -18,7 +18,7 @@ public class RIndex {
     private int currentSuffix;
     private final int sample;
 
-    public RIndex (String Text, int sample) {
+    public RIndex (String Text, int sample, boolean parallel) {
 
         this.sample = 4*sample;
 
@@ -28,10 +28,6 @@ public class RIndex {
         char[] T = Text.toCharArray();
         int n = T.length;
         char[] bwt = new char[n];
-        char[] V = new char[n];
-        int[] occArray = new int[n];
-
-        int pidx = sais.bwtransform(T, bwt, occArray, n);
 
         int m = T.length;
         int[] suffixes = new int[m];
@@ -39,30 +35,32 @@ public class RIndex {
         sais.suffixsort(T, suffixes, m);
         suffixes[0] = m;
 
-        unbwt(bwt, V, occArray, n, pidx);
-
-        for (int i=0; i<occArray.length; i++)
-            occArray[i] += 1;
-
+        int runsLength = 1;
+        for (int i=0; i<m; i++) {
+            int currentSuffix = suffixes[i];
+            if (currentSuffix > 0 ) bwt[i] = T[currentSuffix-1];
+            else bwt[i] = Character.MIN_VALUE;
+            if (i>0 && bwt[i]!=bwt[i-1]) runsLength++;
+        }
 
         sizeOfText = bwt.length;
 
         lastSuffix = suffixes[suffixes.length-1];
 
-        V = null;
-        T = null;
-
         e = System.currentTimeMillis();
         System.out.println("Step 1 (constructing the suffix array): " + (e-s)/1000 + " seconds");
         s = System.currentTimeMillis();
 
-        HashMap<Character, Integer> toBeBwtC;
+        this.preData = new int[runsLength];
+        this.sPrime = new char[runsLength];
+        this.keyDistance = new int[runsLength-1];
+        this.valueDistance = new int[runsLength-1];
+        this.R = new int[runsLength];
+        this.L = new int[runsLength];
 
-        toBeBwtC =  FMIndex.computeC(bwt);
 
-        ArrayList<Integer> prePreData = new ArrayList<>();
-
-        ArrayList<HashMap<Character, Integer>> preRankInitial = new ArrayList<>();
+        /*
+        if (parallel) {
 
         prePreData.add(1);
         for (int i=1; i< bwt.length; i++) {
@@ -90,7 +88,6 @@ public class RIndex {
         this.sPrime = preRunLengthIndex.parallelStream().map(o -> o.x)
                 .collect(Collector.of(StringBuilder::new, StringBuilder::append, StringBuilder::append, StringBuilder::toString))
                 .toCharArray();
-
 
         this.characters = preRunLengthIndex.parallelStream().map(x -> x.x).distinct()
                 .collect(Collector.of(StringBuilder::new, StringBuilder::append, StringBuilder::append, StringBuilder::toString))
@@ -169,6 +166,120 @@ public class RIndex {
         this.R = toCalculateRThread.getR();
         this.keyDistance = distancesThread.getKeyDistance();
         this.valueDistance = distancesThread.getValueDistance();
+
+
+    } else {
+
+
+        }
+         */
+
+        int runIndex = 0;
+        this.preData[runIndex] = 1;
+        this.sPrime[runIndex] = bwt[0];
+        for (int i=1; i<bwt.length; i++) {
+            if (bwt[i]!=bwt[i-1]) {
+                runIndex++;
+                this.preData[runIndex] = i+1;
+                this.sPrime[runIndex] = bwt[i];
+                this.keyDistance[runIndex-1] = suffixes[i];
+                this.valueDistance[runIndex-1] = suffixes[i-1] - suffixes[i];
+            }
+        }
+
+        this.R[0] = this.preData[1] - this.preData[0];
+        this.L[0] = 0;
+        for (int i=1; i<runsLength-1; i++) {
+            this.R[i] = this.preData[i+1] - this.preData[i];
+            this.L[i] = this.preData[i+1] - 2;
+        }
+        this.R[runsLength-1] = bwt.length - (this.preData[this.preData.length-1] - 1);
+        this.L[runsLength-1] = bwt.length-1;
+
+        char[] clonedSPrime = this.sPrime.clone();
+
+        mergeSortRuns(clonedSPrime, this.R, this.L, runsLength);
+
+        ArrayList<Character> characterArrayList = new ArrayList<>();
+
+        this.L[0] = suffixes[this.L[0]];
+        characterArrayList.add(clonedSPrime[0]);
+        for (int i=1; i<clonedSPrime.length; i++) {
+
+            int currentL = this.L[i];
+            this.L[i] = suffixes[currentL];
+
+            if(clonedSPrime[i] == clonedSPrime[i-1]) {
+                this.R[i] += this.R[i-1];
+            } else {
+                characterArrayList.add(clonedSPrime[i]);
+            }
+
+        }
+
+        this.characters = characterArrayList.parallelStream()
+                .collect(Collector.of(StringBuilder::new, StringBuilder::append, StringBuilder::append, StringBuilder::toString))
+                .toCharArray();
+
+
+        quickSortDistances(this.keyDistance, 0, runsLength-2);
+
+        HashMap<Character, Integer> toBeBwtC =  FMIndex.computeC(bwt);
+
+        ArrayList<HashMap<Character, Integer>> preRankInitial = new ArrayList<>();
+
+        int[] occArrayOfSPrime = new int[runsLength];
+
+        HashMap<Character, Integer> toCalculateOccOfSPrime = new HashMap<>();
+        for (char c : toBeBwtC.keySet()) {
+            toCalculateOccOfSPrime.put(c, 0);
+        }
+        for(int i=0; i<this.sPrime.length; i++) {
+            char current = this.sPrime[i];
+            toCalculateOccOfSPrime.put(current, toCalculateOccOfSPrime.get(current)+1);
+            occArrayOfSPrime[i] = toCalculateOccOfSPrime.get(current);
+        }
+
+        HashMap<Character, Integer> toBeC = FMIndex.computeC(this.sPrime);
+
+        for (int i=0; i<this.sPrime.length; i+=this.sample) {
+
+            HashMap<Character, Integer> hashMap = new HashMap<>();
+            for (char c : toBeC.keySet()) {
+
+                int k = i;
+                int lastIndex = i - this.sample;
+                while ( k>0 && k>lastIndex && this.sPrime[k]!=c) k--;
+
+                if(k==0){
+                    if(this.sPrime[0]==c) hashMap.put(c, occArrayOfSPrime[k]);
+                    else hashMap.put(c, 0);
+                } else if (k==lastIndex){
+                    hashMap.put(c, preRankInitial.get(k/this.sample).get(c));
+                } else {
+                    hashMap.put(c, occArrayOfSPrime[k]);
+                }
+
+            }
+            preRankInitial.add(hashMap);
+        }
+
+        this.rankInitial = new int[preRankInitial.size()][this.characters.length];
+        for (int i=0; i < this.rankInitial.length; i++) {
+            for(int j=0; j < this.characters.length; j++) {
+                this.rankInitial[i][j] = preRankInitial.get(i).get(this.characters[j]);
+            }
+        }
+
+        this.bwtC = new int[toBeBwtC.size()];
+        for (int i=0; i<toBeBwtC.size(); i++) {
+            this.bwtC[i] = toBeBwtC.get(this.characters[i]);
+        }
+
+        this.C = new int[toBeC.size()];
+        for(int i=0; i<toBeC.size(); i++) {
+            this.C[i] = toBeC.get(this.characters[i]);
+        }
 
         e = System.currentTimeMillis();
         System.out.println("Step 2 (constructing the r index): " + (e-s)/1000 + " seconds");
@@ -326,18 +437,113 @@ public class RIndex {
 
     }
 
-    // code to get the occurrences array.
-    private static void unbwt(char[] T, char[] U, int[] LF, int n, int pidx) {
-        int[] C = new int[256];
-        int i, t;
-        for(i = 0; i < 256; ++i) { C[i] = 0; }
-        for(i = 0; i < n; ++i) { LF[i] = C[(int)(T[i] & 0xff)]++; }
-        for(i = 0, t = 0; i < 256; ++i) { t += C[i]; C[i] = t - C[i]; }
-        for(i = n - 1, t = 0; 0 <= i; --i) {
-            t = LF[t] + C[(int)((U[i] = T[t]) & 0xff)];
-            t += (t < pidx) ? 1 : 0;
+    private void mergeSortRuns(char[] sPrime, int[] R, int[] L, int n) {
+
+        if (n < 2) {
+            return;
         }
-        C = null;
+
+        int mid = n / 2;
+
+        char[] l = new char[mid];
+        char[] r = new char[n - mid];
+
+        int [] lR = new int[mid];
+        int [] rR = new int[n - mid];
+
+        int [] lL = new int[mid];
+        int [] rL = new int[n - mid];
+
+        System.arraycopy(sPrime, 0, l, 0, mid);
+        if (n - mid >= 0) System.arraycopy(sPrime, mid, r, 0, n - mid);
+
+        System.arraycopy(R, 0, lR, 0, mid);
+        if (n - mid >= 0) System.arraycopy(R, mid, rR, 0, n - mid);
+
+        System.arraycopy(L, 0, lL, 0, mid);
+        if (n - mid >= 0) System.arraycopy(L, mid, rL, 0, n - mid);
+
+        mergeSortRuns(l, lR, lL,  mid);
+        mergeSortRuns(r, rR, rL, n - mid);
+
+        mergeRuns(sPrime, l, r, R, lR, rR, L, lL, rL, mid, n - mid);
+    }
+    private void mergeRuns(char[] sPrime, char[] l, char[] r, int[] R, int[] lR, int[] rR, int[] L, int[] lL, int[] rL, int left, int right) {
+
+        int i = 0, j = 0, k = 0;
+
+        while (i < left && j < right) {
+            if (l[i] <= r[j]) {
+                sPrime[k] = l[i];
+                R[k] = lR[i];
+                L[k] = lL[i];
+                k++;
+                i++;
+            }
+            else {
+                sPrime[k] = r[j];
+                R[k] = rR[j];
+                L[k] = rL[j];
+                k++;
+                j++;
+            }
+        }
+        while (i < left) {
+            sPrime[k] = l[i];
+            R[k] = lR[i];
+            L[k] = lL[i];
+            k++;
+            i++;
+        }
+        while (j < right) {
+            sPrime[k] = r[j];
+            R[k] = rR[j];
+            L[k] = rL[j];
+            k++;
+            j++;
+        }
+    }
+
+
+    private void swapDistances(int[] arr, int i, int j)
+    {
+        int temp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
+
+        int tempValue = this.valueDistance[i];
+        this.valueDistance[i] = this.valueDistance[j];
+        this.valueDistance[j] = tempValue;
+    }
+    private int partitionDistances(int[] arr, int low, int high)
+    {
+
+        int pivot = arr[high];
+
+        int i = (low - 1);
+
+        for(int j = low; j <= high - 1; j++)
+        {
+
+            if (arr[j] < pivot)
+            {
+                i++;
+                swapDistances(arr, i, j);
+            }
+        }
+        swapDistances(arr, i + 1, high);
+        return (i + 1);
+    }
+    private void quickSortDistances(int[] arr, int low, int high)
+    {
+        if (low < high)
+        {
+
+            int pi = partitionDistances(arr, low, high);
+
+            quickSortDistances(arr, low, pi - 1);
+            quickSortDistances(arr, pi + 1, high);
+        }
     }
 
     public int[] getPreData() {

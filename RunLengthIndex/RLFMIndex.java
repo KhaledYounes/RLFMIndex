@@ -27,8 +27,8 @@ public class RLFMIndex {
 
     public static void main(String[] args) {
 
-        GraphLayout.parseInstance((Object) new int[]{1, 2, 3}).totalSize();
 
+        GraphLayout.parseInstance((Object) new int[]{1, 2, 3}).totalSize();
 
         String data = "";
 
@@ -72,6 +72,19 @@ public class RLFMIndex {
             System.exit(0);
         }
 
+
+
+        /*
+        String data = getReadFile("C:\\Users\\Admin\\Downloads\\Texts\\dna\\dna");
+
+        data = data.substring(0, 20000000);
+
+        char[] pattern = "AACCTTCAAA".toCharArray();
+
+        int sample = 64;
+
+         */
+
         data = Character.MIN_VALUE + data;
 
         System.out.println();
@@ -112,7 +125,7 @@ public class RLFMIndex {
 
         startTime = System.currentTimeMillis();
 
-        RIndex rIndex = new RIndex(data, sample);
+        RIndex rIndex = new RIndex(data, sample, false);
 
         endTime = System.currentTimeMillis();
 

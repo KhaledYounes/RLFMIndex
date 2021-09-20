@@ -7,7 +7,7 @@ class RIndexTest {
 
     char[] pattern = "la".toCharArray();
 
-    RIndex rIndex = new RIndex(text, 64);
+    RIndex rIndex = new RIndex(text, 64, true);
 
     @Test
     void getRangeWithRIndex() {
