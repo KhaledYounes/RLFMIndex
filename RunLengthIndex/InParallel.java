@@ -1,151 +1,193 @@
-import java.util.*;
-import java.util.stream.Collectors;
-
 public class InParallel {
 
-    public static class PreRunsThread extends Thread {
+    public static class ToCalculateRLThread extends Thread {
 
-        private int[] array;
-        private ArrayList<Tuple<Character, Integer>> preRuns = new ArrayList<>();
-        private char[] bwt;
+        private final int[] suffixes;
+        private final int[] preData;
+        private final char[] sPrime;
+        private final int[] R;
+        private final int[] L;
 
-        public PreRunsThread (int[] array, char[] bwt) {
-            this.array = array.clone();
-            this.bwt = bwt.clone();
+        public ToCalculateRLThread (int[] suffixes, int[] preData, char[] sPrime) {
+
+            this.suffixes = suffixes.clone();
+            this.preData = preData.clone();
+            this.sPrime = sPrime.clone();
+            this.R = new int[preData.length];
+            this.L = new int[preData.length];
+
         }
 
         @Override
         public void run() {
 
-            this.preRuns.add(new Tuple<>(bwt[0], (this.array[1] - this.array[0])));
-
-            for (int i=1; i<this.array.length-1; i++) {
-                int current = this.array[i]; int post = this.array[i+1];
-                this.preRuns.add(new Tuple<>(bwt[current-1], post - current ));
+            this.R[0] = this.preData[1] - this.preData[0];
+            this.L[0] = 0;
+            for (int i=1; i<preData.length-1; i++) {
+                this.R[i] = this.preData[i+1] - this.preData[i];
+                this.L[i] = this.preData[i+1] - 2;
             }
+            this.R[preData.length-1] = suffixes.length - (this.preData[this.preData.length-1] - 1);
+            this.L[preData.length-1] = suffixes.length-1;
 
-            this.preRuns.add(new Tuple<>(bwt[this.array[this.array.length-1]-1], bwt.length - (this.array[this.array.length-1] - 1) ));
+            mergeSortRuns(this.sPrime, this.R, this.L, this.sPrime.length);
 
-        }
+            this.L[0] = suffixes[this.L[0]];
 
-        public ArrayList<Tuple<Character, Integer>> getPreRuns() {
-            return preRuns;
-        }
-    }
+            for (int i=1; i<this.sPrime.length; i++) {
 
-    public static class ToCalculateRThread extends Thread {
+                int currentL = this.L[i];
+                this.L[i] = suffixes[currentL];
 
-        private ArrayList<Tuple<Character, Integer>> arrayList;
-        private int[] R;
-
-        public ToCalculateRThread (ArrayList<Tuple<Character, Integer>> arrayList) {
-
-            this.arrayList = arrayList;
-
-        }
-
-        @Override
-        public void run() {
-
-            this.arrayList.sort(Comparator.comparing(o -> o.x));
-
-            for(int i=1; i<this.arrayList.size(); i++) {
-
-                if (this.arrayList.get(i).x == this.arrayList.get(i-1).x) {
-                    this.arrayList.get(i).y += this.arrayList.get(i-1).y;
+                if(this.sPrime[i] == this.sPrime[i-1]) {
+                    this.R[i] += this.R[i - 1];
                 }
+            }
+        }
 
+        private void mergeSortRuns(char[] sPrime, int[] R, int[] L, int n) {
+
+            if (n < 2) {
+                return;
             }
 
-            this.R = this.arrayList.parallelStream().map(o -> o.y).mapToInt(Integer::intValue).toArray();
+            int mid = n / 2;
 
+            char[] l = new char[mid];
+            char[] r = new char[n - mid];
+
+            int [] lR = new int[mid];
+            int [] rR = new int[n - mid];
+
+            int [] lL = new int[mid];
+            int [] rL = new int[n - mid];
+
+            System.arraycopy(sPrime, 0, l, 0, mid);
+            if (n - mid >= 0) System.arraycopy(sPrime, mid, r, 0, n - mid);
+
+            System.arraycopy(R, 0, lR, 0, mid);
+            if (n - mid >= 0) System.arraycopy(R, mid, rR, 0, n - mid);
+
+            System.arraycopy(L, 0, lL, 0, mid);
+            if (n - mid >= 0) System.arraycopy(L, mid, rL, 0, n - mid);
+
+            mergeSortRuns(l, lR, lL,  mid);
+            mergeSortRuns(r, rR, rL, n - mid);
+
+            mergeRuns(sPrime, l, r, R, lR, rR, L, lL, rL, mid, n - mid);
+        }
+        private void mergeRuns(char[] sPrime, char[] l, char[] r, int[] R, int[] lR, int[] rR, int[] L, int[] lL, int[] rL, int left, int right) {
+
+            int i = 0, j = 0, k = 0;
+
+            while (i < left && j < right) {
+                if (l[i] <= r[j]) {
+                    sPrime[k] = l[i];
+                    R[k] = lR[i];
+                    L[k] = lL[i];
+                    k++;
+                    i++;
+                }
+                else {
+                    sPrime[k] = r[j];
+                    R[k] = rR[j];
+                    L[k] = rL[j];
+                    k++;
+                    j++;
+                }
+            }
+            while (i < left) {
+                sPrime[k] = l[i];
+                R[k] = lR[i];
+                L[k] = lL[i];
+                k++;
+                i++;
+            }
+            while (j < right) {
+                sPrime[k] = r[j];
+                R[k] = rR[j];
+                L[k] = rL[j];
+                k++;
+                j++;
+            }
         }
 
         public int[] getR() {
             return R;
         }
 
-    }
-
-
-    public static class ToCalculateLThread extends Thread {
-
-        private int[] array;
-        private char[] bwt;
-        private int[] suffixes;
-        private int[] L;
-
-        public ToCalculateLThread (int[] array, char[] bwt, int[] suffixes) {
-            this.array = array.clone();
-            this.bwt = bwt.clone();
-            this.suffixes = suffixes.clone();
-        }
-
-        @Override
-        public void run() {
-
-            ArrayList<Tuple<Character, Integer>> tupleArrayList = new ArrayList<>();
-
-            tupleArrayList.add(new Tuple<>(bwt[0], 0));
-
-            for (int i=1; i<this.array.length-1; i++) {
-                int current = this.array[i]-1; int post = this.array[i+1] - 1;
-                tupleArrayList.add(new Tuple<>(bwt[current], post-1));
-            }
-
-            tupleArrayList.add(new Tuple<>(bwt[this.array[this.array.length-1]-1], bwt.length-1));
-
-            tupleArrayList.sort(Comparator.comparing(o -> o.x));
-
-            this.L = tupleArrayList.parallelStream().map(x -> this.suffixes[x.y]).mapToInt(Integer::intValue).toArray();
-
-        }
-
         public int[] getL() {
             return L;
         }
+
     }
 
 
     public static class DistancesThread extends Thread {
 
-        private int[] array;
-        private char[] bwt;
-        private int[] suffixes;
-        private List<Tuple<Integer, Integer>> sorted;
-        private int [] keyDistance;
-        private int [] valueDistance;
+        private final int[] suffixes;
+        private final int[] preData;
+        private final int[] keyDistance;
+        private final int[] valueDistance;
 
-        public DistancesThread (int[] array, char[] bwt, int[] suffixes) {
-            this.array = array.clone();
-            this.bwt = bwt.clone();
+        public DistancesThread (int[] suffixes, int[] preData) {
             this.suffixes = suffixes.clone();
+            this.preData = preData.clone();
+            this.keyDistance = new int[preData.length-1];
+            this.valueDistance = new int[preData.length-1];
         }
 
         @Override
         public void run() {
 
-            ArrayList<Tuple<Integer, Integer>> tupleArrayList = new ArrayList<>();
-
-            for (int i=1; i<this.array.length; i++) {
-                int temp = this.array[i]-1;
-                tupleArrayList.add(new Tuple<>(suffixes[temp], suffixes[temp-1] - suffixes[temp]));
+            for (int i=1; i<this.preData.length; i++) {
+                int currentRun = this.preData[i]-1;
+                this.keyDistance[i-1] = this.suffixes[currentRun];
+                this.valueDistance[i-1] = this.suffixes[currentRun-1] - this.suffixes[currentRun];
             }
+            quickSortDistances(this.keyDistance, 0, this.keyDistance.length-1);
+        }
 
-            this.sorted = tupleArrayList.parallelStream().sorted(Comparator.comparing(o -> o.x)).collect(Collectors.toList());
 
-            int[] distancesKeysArray = new int[this.sorted.size()];
-            int[] distancesValuesArray = new int[this.sorted.size()];
+        private void swapDistances(int[] arr, int i, int j)
+        {
+            int temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
 
-            for(int i=0; i< this.sorted.size(); i++) {
-                Tuple<Integer, Integer> tempTuple = this.sorted.get(i);
-                distancesKeysArray[i] = tempTuple.x;
-                distancesValuesArray[i] = tempTuple.y;
+            int tempValue = this.valueDistance[i];
+            this.valueDistance[i] = this.valueDistance[j];
+            this.valueDistance[j] = tempValue;
+        }
+        private int partitionDistances(int[] arr, int low, int high)
+        {
+
+            int pivot = arr[high];
+
+            int i = (low - 1);
+
+            for(int j = low; j <= high - 1; j++)
+            {
+
+                if (arr[j] < pivot)
+                {
+                    i++;
+                    swapDistances(arr, i, j);
+                }
             }
+            swapDistances(arr, i + 1, high);
+            return (i + 1);
+        }
+        private void quickSortDistances(int[] arr, int low, int high)
+        {
+            if (low < high)
+            {
 
-            this.keyDistance = distancesKeysArray;
-            this.valueDistance = distancesValuesArray;
+                int pi = partitionDistances(arr, low, high);
 
+                quickSortDistances(arr, low, pi - 1);
+                quickSortDistances(arr, pi + 1, high);
+            }
         }
 
         public int[] getKeyDistance() {

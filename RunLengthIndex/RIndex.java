@@ -51,234 +51,216 @@ public class RIndex {
         System.out.println("Step 1 (constructing the suffix array): " + (e-s)/1000 + " seconds");
         s = System.currentTimeMillis();
 
-        this.preData = new int[runsLength];
-        this.sPrime = new char[runsLength];
-        this.keyDistance = new int[runsLength-1];
-        this.valueDistance = new int[runsLength-1];
-        this.R = new int[runsLength];
-        this.L = new int[runsLength];
-
-
-        /*
         if (parallel) {
 
-        prePreData.add(1);
-        for (int i=1; i< bwt.length; i++) {
-            if(bwt[i]!=bwt[i-1]) {
-                prePreData.add(i+1);
+            this.preData = new int[runsLength];
+            this.sPrime = new char[runsLength];
+
+            int runIndex = 0;
+            this.preData[runIndex] = 1;
+            this.sPrime[runIndex] = bwt[0];
+            for (int i=1; i<bwt.length; i++) {
+                if (bwt[i]!=bwt[i-1]) {
+                    runIndex++;
+                    this.preData[runIndex] = i+1;
+                    this.sPrime[runIndex] = bwt[i];
+                }
             }
-        }
 
-        this.preData = prePreData.parallelStream().mapToInt(Integer::intValue).toArray();
+            InParallel.ToCalculateRLThread rlThread = new InParallel.ToCalculateRLThread(suffixes, this.preData, this.sPrime); rlThread.start();
+            InParallel.DistancesThread distancesThread = new InParallel.DistancesThread(suffixes, this.preData); distancesThread.start();
 
-        InParallel.PreRunsThread preRunsThread = new InParallel.PreRunsThread(this.preData, bwt); preRunsThread.start();
-        InParallel.DistancesThread distancesThread = new InParallel.DistancesThread(this.preData, bwt, suffixes); distancesThread.start();
-        InParallel.ToCalculateLThread toCalculateLThread = new InParallel.ToCalculateLThread(this.preData, bwt, suffixes); toCalculateLThread.start();
+            HashMap<Character, Integer> toBeBwtC =  FMIndex.computeC(bwt);
 
-        try {
+            ArrayList<HashMap<Character, Integer>> preRankInitial = new ArrayList<>();
 
-            preRunsThread.join();
+            int[] occArrayOfSPrime = new int[runsLength];
 
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
+            HashMap<Character, Integer> toCalculateOccOfSPrime = new HashMap<>();
+            for (char c : toBeBwtC.keySet()) {
+                toCalculateOccOfSPrime.put(c, 0);
+            }
+            for(int i=0; i<this.sPrime.length; i++) {
+                char current = this.sPrime[i];
+                toCalculateOccOfSPrime.put(current, toCalculateOccOfSPrime.get(current)+1);
+                occArrayOfSPrime[i] = toCalculateOccOfSPrime.get(current);
+            }
 
-        ArrayList<Tuple<Character, Integer>> preRunLengthIndex = preRunsThread.getPreRuns();
+            HashMap<Character, Integer> toBeC = FMIndex.computeC(this.sPrime);
 
-        this.sPrime = preRunLengthIndex.parallelStream().map(o -> o.x)
-                .collect(Collector.of(StringBuilder::new, StringBuilder::append, StringBuilder::append, StringBuilder::toString))
-                .toCharArray();
+            for (int i=0; i<this.sPrime.length; i+=this.sample) {
 
-        this.characters = preRunLengthIndex.parallelStream().map(x -> x.x).distinct()
-                .collect(Collector.of(StringBuilder::new, StringBuilder::append, StringBuilder::append, StringBuilder::toString))
-                .toCharArray();
+                HashMap<Character, Integer> hashMap = new HashMap<>();
+                for (char c : toBeC.keySet()) {
 
-        Arrays.sort(this.characters);
+                    int k = i;
+                    int lastIndex = i - this.sample;
+                    while ( k>0 && k>lastIndex && this.sPrime[k]!=c) k--;
 
-        InParallel.ToCalculateRThread toCalculateRThread = new InParallel.ToCalculateRThread(preRunLengthIndex); toCalculateRThread.start();
+                    if(k==0){
+                        if(this.sPrime[0]==c) hashMap.put(c, occArrayOfSPrime[k]);
+                        else hashMap.put(c, 0);
+                    } else if (k==lastIndex){
+                        hashMap.put(c, preRankInitial.get(k/this.sample).get(c));
+                    } else {
+                        hashMap.put(c, occArrayOfSPrime[k]);
+                    }
 
-        int[] occArrayOfSPrime = new int[this.sPrime.length];
+                }
+                preRankInitial.add(hashMap);
+            }
 
-        HashMap<Character, Integer> toCalculateOccOfSPrime = new HashMap<>();
-        for (char c : toBeBwtC.keySet()) {
-            toCalculateOccOfSPrime.put(c, 0);
-        }
-        for(int i=0; i<this.sPrime.length; i++) {
-            char current = this.sPrime[i];
-            toCalculateOccOfSPrime.put(current, toCalculateOccOfSPrime.get(current)+1);
-            occArrayOfSPrime[i] = toCalculateOccOfSPrime.get(current);
-        }
+            this.characters = toBeC.keySet().stream().sorted()
+                    .collect(Collector.of(StringBuilder::new, StringBuilder::append, StringBuilder::append, StringBuilder::toString))
+                    .toCharArray();
 
-        HashMap<Character, Integer> toBeC;
+            this.rankInitial = new int[preRankInitial.size()][this.characters.length];
+            for (int i=0; i < this.rankInitial.length; i++) {
+                for(int j=0; j < this.characters.length; j++) {
+                    this.rankInitial[i][j] = preRankInitial.get(i).get(this.characters[j]);
+                }
+            }
 
-        toBeC = FMIndex.computeC(this.sPrime);
+            this.bwtC = new int[toBeBwtC.size()];
+            for (int i=0; i<toBeBwtC.size(); i++) {
+                this.bwtC[i] = toBeBwtC.get(this.characters[i]);
+            }
 
-        for (int i=0; i<this.sPrime.length; i+=this.sample) {
+            this.C = new int[toBeC.size()];
+            for(int i=0; i<toBeC.size(); i++) {
+                this.C[i] = toBeC.get(this.characters[i]);
+            }
 
-            HashMap<Character, Integer> hashMap = new HashMap<>();
-            for (char c : toBeC.keySet()) {
 
-                int k = i;
-                int lastIndex = i - this.sample;
-                while ( k>0 && k>lastIndex && this.sPrime[k]!=c) k--;
+            try {
 
-                if(k==0){
-                    if(this.sPrime[0]==c) hashMap.put(c, occArrayOfSPrime[k]);
-                    else hashMap.put(c, 0);
-                } else if (k==lastIndex){
-                    hashMap.put(c, preRankInitial.get(k/this.sample).get(c));
+                distancesThread.join();
+                rlThread.join();
+
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
+
+            this.keyDistance = distancesThread.getKeyDistance();
+            this.valueDistance = distancesThread.getValueDistance();
+            this.R = rlThread.getR();
+            this.L = rlThread.getL();
+
+        } else {
+
+            this.preData = new int[runsLength];
+            this.sPrime = new char[runsLength];
+            this.keyDistance = new int[runsLength-1];
+            this.valueDistance = new int[runsLength-1];
+            this.R = new int[runsLength];
+            this.L = new int[runsLength];
+
+            int runIndex = 0;
+            this.preData[runIndex] = 1;
+            this.sPrime[runIndex] = bwt[0];
+            for (int i=1; i<bwt.length; i++) {
+                if (bwt[i]!=bwt[i-1]) {
+                    runIndex++;
+                    this.preData[runIndex] = i+1;
+                    this.sPrime[runIndex] = bwt[i];
+                    this.keyDistance[runIndex-1] = suffixes[i];
+                    this.valueDistance[runIndex-1] = suffixes[i-1] - suffixes[i];
+                }
+            }
+
+            this.R[0] = this.preData[1] - this.preData[0];
+            this.L[0] = 0;
+            for (int i=1; i<runsLength-1; i++) {
+                this.R[i] = this.preData[i+1] - this.preData[i];
+                this.L[i] = this.preData[i+1] - 2;
+            }
+            this.R[runsLength-1] = bwt.length - (this.preData[this.preData.length-1] - 1);
+            this.L[runsLength-1] = bwt.length-1;
+
+            char[] clonedSPrime = this.sPrime.clone();
+
+            mergeSortRuns(clonedSPrime, this.R, this.L, runsLength);
+
+            ArrayList<Character> characterArrayList = new ArrayList<>();
+
+            this.L[0] = suffixes[this.L[0]];
+            characterArrayList.add(clonedSPrime[0]);
+            for (int i=1; i<clonedSPrime.length; i++) {
+
+                int currentL = this.L[i];
+                this.L[i] = suffixes[currentL];
+
+                if(clonedSPrime[i] == clonedSPrime[i-1]) {
+                    this.R[i] += this.R[i-1];
                 } else {
-                    hashMap.put(c, occArrayOfSPrime[k]);
+                    characterArrayList.add(clonedSPrime[i]);
                 }
 
             }
-            preRankInitial.add(hashMap);
-        }
 
-        this.rankInitial = new int[preRankInitial.size()][this.characters.length];
-        for (int i=0; i < this.rankInitial.length; i++) {
-            for(int j=0; j < this.characters.length; j++) {
-                this.rankInitial[i][j] = preRankInitial.get(i).get(this.characters[j]);
+            this.characters = characterArrayList.parallelStream()
+                    .collect(Collector.of(StringBuilder::new, StringBuilder::append, StringBuilder::append, StringBuilder::toString))
+                    .toCharArray();
+
+            quickSortDistances(this.keyDistance, 0, this.keyDistance.length-1);
+
+            HashMap<Character, Integer> toBeBwtC =  FMIndex.computeC(bwt);
+
+            ArrayList<HashMap<Character, Integer>> preRankInitial = new ArrayList<>();
+
+            int[] occArrayOfSPrime = new int[runsLength];
+
+            HashMap<Character, Integer> toCalculateOccOfSPrime = new HashMap<>();
+            for (char c : toBeBwtC.keySet()) {
+                toCalculateOccOfSPrime.put(c, 0);
             }
-        }
-
-        this.bwtC = new int[toBeBwtC.size()];
-        for (int i=0; i<toBeBwtC.size(); i++) {
-            this.bwtC[i] = toBeBwtC.get(this.characters[i]);
-        }
-
-        this.C = new int[toBeC.size()];
-        for(int i=0; i<toBeC.size(); i++) {
-            this.C[i] = toBeC.get(this.characters[i]);
-        }
-
-        try {
-
-            toCalculateLThread.join();
-            distancesThread.join();
-            toCalculateRThread.join();
-
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
-
-        this.L = toCalculateLThread.getL();
-        this.R = toCalculateRThread.getR();
-        this.keyDistance = distancesThread.getKeyDistance();
-        this.valueDistance = distancesThread.getValueDistance();
-
-
-    } else {
-
-
-        }
-         */
-
-        int runIndex = 0;
-        this.preData[runIndex] = 1;
-        this.sPrime[runIndex] = bwt[0];
-        for (int i=1; i<bwt.length; i++) {
-            if (bwt[i]!=bwt[i-1]) {
-                runIndex++;
-                this.preData[runIndex] = i+1;
-                this.sPrime[runIndex] = bwt[i];
-                this.keyDistance[runIndex-1] = suffixes[i];
-                this.valueDistance[runIndex-1] = suffixes[i-1] - suffixes[i];
-            }
-        }
-
-        this.R[0] = this.preData[1] - this.preData[0];
-        this.L[0] = 0;
-        for (int i=1; i<runsLength-1; i++) {
-            this.R[i] = this.preData[i+1] - this.preData[i];
-            this.L[i] = this.preData[i+1] - 2;
-        }
-        this.R[runsLength-1] = bwt.length - (this.preData[this.preData.length-1] - 1);
-        this.L[runsLength-1] = bwt.length-1;
-
-        char[] clonedSPrime = this.sPrime.clone();
-
-        mergeSortRuns(clonedSPrime, this.R, this.L, runsLength);
-
-        ArrayList<Character> characterArrayList = new ArrayList<>();
-
-        this.L[0] = suffixes[this.L[0]];
-        characterArrayList.add(clonedSPrime[0]);
-        for (int i=1; i<clonedSPrime.length; i++) {
-
-            int currentL = this.L[i];
-            this.L[i] = suffixes[currentL];
-
-            if(clonedSPrime[i] == clonedSPrime[i-1]) {
-                this.R[i] += this.R[i-1];
-            } else {
-                characterArrayList.add(clonedSPrime[i]);
+            for(int i=0; i<this.sPrime.length; i++) {
+                char current = this.sPrime[i];
+                toCalculateOccOfSPrime.put(current, toCalculateOccOfSPrime.get(current)+1);
+                occArrayOfSPrime[i] = toCalculateOccOfSPrime.get(current);
             }
 
-        }
+            HashMap<Character, Integer> toBeC = FMIndex.computeC(this.sPrime);
 
-        this.characters = characterArrayList.parallelStream()
-                .collect(Collector.of(StringBuilder::new, StringBuilder::append, StringBuilder::append, StringBuilder::toString))
-                .toCharArray();
+            for (int i=0; i<this.sPrime.length; i+=this.sample) {
 
+                HashMap<Character, Integer> hashMap = new HashMap<>();
+                for (char c : toBeC.keySet()) {
 
-        quickSortDistances(this.keyDistance, 0, runsLength-2);
+                    int k = i;
+                    int lastIndex = i - this.sample;
+                    while ( k>0 && k>lastIndex && this.sPrime[k]!=c) k--;
 
-        HashMap<Character, Integer> toBeBwtC =  FMIndex.computeC(bwt);
+                    if(k==0){
+                        if(this.sPrime[0]==c) hashMap.put(c, occArrayOfSPrime[k]);
+                        else hashMap.put(c, 0);
+                    } else if (k==lastIndex){
+                        hashMap.put(c, preRankInitial.get(k/this.sample).get(c));
+                    } else {
+                        hashMap.put(c, occArrayOfSPrime[k]);
+                    }
 
-        ArrayList<HashMap<Character, Integer>> preRankInitial = new ArrayList<>();
-
-        int[] occArrayOfSPrime = new int[runsLength];
-
-        HashMap<Character, Integer> toCalculateOccOfSPrime = new HashMap<>();
-        for (char c : toBeBwtC.keySet()) {
-            toCalculateOccOfSPrime.put(c, 0);
-        }
-        for(int i=0; i<this.sPrime.length; i++) {
-            char current = this.sPrime[i];
-            toCalculateOccOfSPrime.put(current, toCalculateOccOfSPrime.get(current)+1);
-            occArrayOfSPrime[i] = toCalculateOccOfSPrime.get(current);
-        }
-
-        HashMap<Character, Integer> toBeC = FMIndex.computeC(this.sPrime);
-
-        for (int i=0; i<this.sPrime.length; i+=this.sample) {
-
-            HashMap<Character, Integer> hashMap = new HashMap<>();
-            for (char c : toBeC.keySet()) {
-
-                int k = i;
-                int lastIndex = i - this.sample;
-                while ( k>0 && k>lastIndex && this.sPrime[k]!=c) k--;
-
-                if(k==0){
-                    if(this.sPrime[0]==c) hashMap.put(c, occArrayOfSPrime[k]);
-                    else hashMap.put(c, 0);
-                } else if (k==lastIndex){
-                    hashMap.put(c, preRankInitial.get(k/this.sample).get(c));
-                } else {
-                    hashMap.put(c, occArrayOfSPrime[k]);
                 }
-
+                preRankInitial.add(hashMap);
             }
-            preRankInitial.add(hashMap);
-        }
 
-        this.rankInitial = new int[preRankInitial.size()][this.characters.length];
-        for (int i=0; i < this.rankInitial.length; i++) {
-            for(int j=0; j < this.characters.length; j++) {
-                this.rankInitial[i][j] = preRankInitial.get(i).get(this.characters[j]);
+            this.rankInitial = new int[preRankInitial.size()][this.characters.length];
+            for (int i=0; i < this.rankInitial.length; i++) {
+                for(int j=0; j < this.characters.length; j++) {
+                    this.rankInitial[i][j] = preRankInitial.get(i).get(this.characters[j]);
+                }
             }
-        }
 
-        this.bwtC = new int[toBeBwtC.size()];
-        for (int i=0; i<toBeBwtC.size(); i++) {
-            this.bwtC[i] = toBeBwtC.get(this.characters[i]);
-        }
+            this.bwtC = new int[toBeBwtC.size()];
+            for (int i=0; i<toBeBwtC.size(); i++) {
+                this.bwtC[i] = toBeBwtC.get(this.characters[i]);
+            }
 
-        this.C = new int[toBeC.size()];
-        for(int i=0; i<toBeC.size(); i++) {
-            this.C[i] = toBeC.get(this.characters[i]);
+            this.C = new int[toBeC.size()];
+            for(int i=0; i<toBeC.size(); i++) {
+                this.C[i] = toBeC.get(this.characters[i]);
+            }
+
         }
 
         e = System.currentTimeMillis();

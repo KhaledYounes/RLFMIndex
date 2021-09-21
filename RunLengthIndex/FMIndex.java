@@ -38,34 +38,33 @@ public class FMIndex {
         s = System.currentTimeMillis();
 
 
-        ArrayList<Integer> suffixKeys = new ArrayList<>();
-        ArrayList<Integer> suffixValues = new ArrayList<>();
+
+        if (suffixes.length < this.sample) {
+            this.sampledIndex = new int[suffixes.length];
+            this.suffixes = new int[suffixes.length];
+        } else {
+            this.sampledIndex = new int[suffixes.length/this.sample];
+            this.suffixes = new int[suffixes.length/this.sample];
+        }
+
 
 
         if (suffixes.length < this.sample) {
             for (int i=0; i< suffixes.length; i++) {
-                suffixKeys.add(i);
-                suffixValues.add(suffixes[i]);
+                this.sampledIndex[i] = i;
+                this.suffixes[i] = suffixes[i];
             }
         } else {
+            int suffixIndex = 0;
             for (int i=0; i< suffixes.length; i++) {
                 if (suffixes[i]%this.sample==0)  {
-                    suffixKeys.add(i);
-                    suffixValues.add(suffixes[i]);
+                    this.sampledIndex[suffixIndex] = i;
+                    this.suffixes[suffixIndex] = suffixes[i];
+                    suffixIndex++;
                 }
             }
         }
 
-        int[] suffixKeysArray = new int[suffixKeys.size()];
-        int[] suffixValuesArray = new int [suffixKeys.size()];
-
-        for (int i=0; i<suffixKeys.size(); i++) {
-            suffixKeysArray[i] = suffixKeys.get(i);
-            suffixValuesArray[i] = suffixValues.get(i);
-        }
-
-        this.sampledIndex = suffixKeysArray;
-        this.suffixes = suffixValuesArray;
 
         this.sample *= 4;
 
@@ -117,7 +116,6 @@ public class FMIndex {
         for (int i=0; i<this.characters.length; i++) {
             this.characters[i] = charactersCharacter[i];
         }
-
         Arrays.sort(this.characters);
 
         this.bwtOfText = bwt;

@@ -27,9 +27,6 @@ public class RLFMIndex {
 
     public static void main(String[] args) {
 
-
-        GraphLayout.parseInstance((Object) new int[]{1, 2, 3}).totalSize();
-
         String data = "";
 
         char[] pattern = "".toCharArray();
@@ -71,19 +68,6 @@ public class RLFMIndex {
             System.out.println();
             System.exit(0);
         }
-
-
-
-        /*
-        String data = getReadFile("C:\\Users\\Admin\\Downloads\\Texts\\dna\\dna");
-
-        data = data.substring(0, 20000000);
-
-        char[] pattern = "AACCTTCAAA".toCharArray();
-
-        int sample = 64;
-
-         */
 
         data = Character.MIN_VALUE + data;
 
@@ -129,9 +113,21 @@ public class RLFMIndex {
 
         endTime = System.currentTimeMillis();
 
-        System.out.println("Done with constructing the run length index. That took " + (endTime - startTime)/1000 + " seconds.");
+        System.out.println("Done with constructing the run length index sequentially. That took " + (endTime - startTime)/1000 + " seconds.");
 
-        System.out.println("Runs to length (n/r): " + ((double) data.length()/rIndex.getPreData().length) );
+        System.out.println();
+
+        startTime = System.currentTimeMillis();
+
+        RIndex rIndexParallel = new RIndex(data, sample, true);
+
+        endTime = System.currentTimeMillis();
+
+        System.out.println("Done with constructing the run length index in parallel. That took " + (endTime - startTime)/1000 + " seconds.");
+
+        System.out.println();
+
+        System.out.println("Runs to length (n/r): " + ((double) data.length()/rIndexParallel.getPreData().length) );
 
         System.out.println("The size of the r index is: " +  GraphLayout.parseInstance(rIndex).totalSize()/1024/1024 + " megabytes.");
 
