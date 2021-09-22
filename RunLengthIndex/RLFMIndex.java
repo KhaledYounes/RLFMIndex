@@ -148,7 +148,7 @@ public class RLFMIndex {
 
         System.out.println();
 
-        System.out.println("Runs to length (n/r): " + ((double) data.length()/rIndexParallel.getPreData().length) );
+        System.out.println("Length to runs (n/r): " + ((double) data.length()/rIndexParallel.getPreData().length) );
 
         System.out.println("The size of the r index is: " +  GraphLayout.parseInstance(rIndex).totalSize()/1024/1024 + " megabytes.");
 
