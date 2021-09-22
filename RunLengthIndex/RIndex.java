@@ -313,7 +313,13 @@ public class RIndex {
 
     private void modifyLastSuffix(char c, int last) {
 
-        int k = getRunNumAndIndex(last).y;
+        int k;
+        int indexInPreData = Arrays.binarySearch(this.preData, last);
+        if (indexInPreData < 0) {
+            k = Math.abs(indexInPreData + 1);
+        } else {
+            k = indexInPreData+1;
+        }
 
         if(this.sPrime[k-1]==c) {
             currentSuffix = currentSuffix - 1;
@@ -326,8 +332,15 @@ public class RIndex {
 
     public int rankOfBwtWithRIndex (char c, int q) {
 
-        Tuple<Integer, Integer> tuple = getRunNumAndIndex(q);
-        int j = tuple.x, k = tuple.y;
+        int j, k;
+        int indexInPreData = Arrays.binarySearch(this.preData, q);
+        if (indexInPreData < 0) {
+            indexInPreData = Math.abs(indexInPreData + 1);
+            j = this.preData[indexInPreData-1]; k = indexInPreData;
+        } else {
+            j = q; k = indexInPreData+1;
+        }
+
 
         char cPrime = this.sPrime[k-1];
 
@@ -343,24 +356,6 @@ public class RIndex {
         if (c == cPrime) {
             return R[index] + (q - j + 1);
         } else return R[index];
-
-    }
-
-    private Tuple<Integer, Integer> getRunNumAndIndex(int i) {
-
-        int indexInPreData = Arrays.binarySearch(this.preData, i);
-
-        if (indexInPreData < 0) {
-
-            indexInPreData = Math.abs(indexInPreData + 1);
-
-            return new Tuple<>(this.preData[indexInPreData-1], indexInPreData);
-
-        } else {
-
-            return new Tuple<>(i, indexInPreData+1);
-
-        }
 
     }
 

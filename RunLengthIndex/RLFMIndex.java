@@ -27,6 +27,8 @@ public class RLFMIndex {
 
     public static void main(String[] args) {
 
+        boolean test = false;
+
         String data = "";
 
         char[] pattern = "".toCharArray();
@@ -52,10 +54,24 @@ public class RLFMIndex {
             } else if (args.length==4){
                 data = getReadFile(args[0]);
                 pattern = args[1].toCharArray();
-                if (!args[2].equals("full")) {
+                if (!args[2].equalsIgnoreCase("full")) {
                     data = data.substring(0, Integer.parseInt(args[2]));
                 }
-                sample = Integer.parseInt(args[3]);
+                if (!args[3].equalsIgnoreCase("no")) {
+                    sample = Integer.parseInt(args[3]);
+                }
+            } else if (args.length==5) {
+                data = getReadFile(args[0]);
+                pattern = args[1].toCharArray();
+                if (!args[2].equalsIgnoreCase("full")) {
+                    data = data.substring(0, Integer.parseInt(args[2]));
+                }
+                if (!args[3].equalsIgnoreCase("no")) {
+                    sample = Integer.parseInt(args[3]);
+                }
+                if (args[4].equalsIgnoreCase("test")) {
+                    test = true;
+                }
             } else {
                 throw new IllegalArgumentException();
             }
@@ -63,15 +79,20 @@ public class RLFMIndex {
         } catch (Exception exception) {
             System.out.println("args[0] -> Enter the path of the file to be indexed.");
             System.out.println("args[1] -> (Optional) Enter a pattern to search for.");
-            System.out.println("args[2] -> (Optional) Enter up to which character you want index.");
+            System.out.println("args[2] -> (Optional) Enter up to which character you want index or full to index the whole text.");
             System.out.println("args[3] -> (Optional) Enter the grade of the sampling.");
+            System.out.println("args[4] -> (Optional) Enter test, if you want to test the results");
             System.out.println();
             System.exit(0);
         }
 
-        data = Character.MIN_VALUE + data;
+        System.out.println();
+
+        System.out.println("Input's length: " + data.length());
 
         System.out.println();
+
+        data = Character.MIN_VALUE + data;
 
         System.out.println(".................................................");
 
@@ -151,19 +172,25 @@ public class RLFMIndex {
 
         System.out.println();
 
-        Scanner scanner = new Scanner(System.in);
+        if (test) {
 
-        while (true) {
-            System.out.println("Enter -1 to exit or an index of the results array to make sure that the result at this index is correct.");
-            int current = scanner.nextInt();
-            //Enter -1 to end the program
-            if(current==-1) break;
-            else {
-                char[] extract = new char[pattern.length];
-                System.arraycopy(data.toCharArray(), current, extract, 0, extract.length);
-                System.out.println(Arrays.toString(extract));
+            Scanner scanner = new Scanner(System.in);
+
+            while (true) {
+                System.out.println("Enter -1 to exit or an index of the results array to make sure that the result at this index is correct.");
+                int current = scanner.nextInt();
+                //Enter -1 to end the program
+                if(current==-1) break;
+                else {
+                    char[] extract = new char[pattern.length];
+                    System.arraycopy(data.toCharArray(), current, extract, 0, extract.length);
+                    System.out.println(Arrays.toString(extract));
+                }
             }
+
         }
+
+        System.out.println("End...");
 
         System.out.println();
 
